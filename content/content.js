@@ -47,39 +47,22 @@ class LeetCodeSubmissionDetector {
         return;
       }
       
-      // Look for indicators that only appear for ACCEPTED submissions:
-      // 1. "Runtime" and "Memory" stats with "Beats X%" - these only show for accepted
-      // 2. Green "Accepted" text with class containing "text-green"
+      // Log current state for debugging
+      console.log(`[LeetCode SR] Checking for accepted result (attempt ${attempts})...`);
       
-      // Method 1: Check for Runtime/Memory beats percentage (only shows on accepted)
-      const pageText = document.body.innerText;
-      const hasRuntimeBeats = pageText.includes('Runtime') && pageText.includes('Beats');
-      const hasMemoryBeats = pageText.includes('Memory') && pageText.includes('Beats');
+      const isAccepted = this.isAcceptedSubmission();
       
-      if (hasRuntimeBeats && hasMemoryBeats) {
-        // Found runtime and memory stats - this is an accepted submission
-        // But make sure it's a fresh result (check for "Accepted" text too)
-        const acceptedEl = document.querySelector('[class*="text-green-s"], [class*="text-green"]');
-        if (acceptedEl && acceptedEl.textContent?.trim() === 'Accepted') {
-          console.log('[LeetCode SR] Found Accepted with Runtime/Memory stats!');
-          this.showModal();
-          return;
-        }
+      if (isAccepted) {
+        console.log('[LeetCode SR] Accepted submission detected!');
+        this.showModal();
+        return;
       }
       
-      // Method 2: Look for the specific result panel structure
-      // Check for "X / X testcases passed" combined with green Accepted
-      const testcasesPassed = pageText.match(/(\d+)\s*\/\s*(\d+)\s*testcases passed/);
-      if (testcasesPassed && testcasesPassed[1] === testcasesPassed[2]) {
-        // All testcases passed - check for Accepted
-        const greenElements = document.querySelectorAll('[class*="text-green"]');
-        for (const el of greenElements) {
-          if (el.textContent?.trim() === 'Accepted') {
-            console.log('[LeetCode SR] Found Accepted with all testcases passed!');
-            this.showModal();
-            return;
-          }
-        }
+      // Check if we got a failure result (Wrong Answer, TLE, MLE, etc)
+      // If so, don't stop polling - user might resubmit
+      const isFailure = this.isFailedSubmission();
+      if (isFailure) {
+        console.log('[LeetCode SR] Failed submission detected, continuing to watch for resubmit...');
       }
       
       // Keep polling
@@ -88,6 +71,88 @@ class LeetCodeSubmissionDetector {
     
     // Start checking after a short delay
     setTimeout(checkResult, 1000);
+  }
+  
+  isAcceptedSubmission() {
+    // First, check if there's a failure indicator - if so, definitely NOT accepted
+    const failureIndicators = [
+      'Wrong Answer',
+      'Time Limit Exceeded', 
+      'Memory Limit Exceeded',
+      'Runtime Error',
+      'Compile Error',
+      'Output Limit Exceeded'
+    ];
+    
+    // Check for red failure text (text-red-60 class is used for failures)
+    const redElements = document.querySelectorAll('[class*="text-red"]');
+    for (const el of redElements) {
+      const text = el.textContent?.trim() || '';
+      for (const failure of failureIndicators) {
+        if (text.includes(failure)) {
+          console.log('[LeetCode SR] Found failure indicator:', failure);
+          return false;
+        }
+      }
+    }
+    
+    // Check for "X / Y testcases passed" where X !== Y (failure case)
+    const pageText = document.body.innerText;
+    const testcaseMatch = pageText.match(/(\d+)\s*\/\s*(\d+)\s*testcases passed/i);
+    if (testcaseMatch && testcaseMatch[1] !== testcaseMatch[2]) {
+      console.log('[LeetCode SR] Found failed testcases:', testcaseMatch[0]);
+      return false;
+    }
+    
+    // Now check for accepted: look for the specific result panel structure
+    // The accepted panel has "Runtime X ms Beats Y%" AND "Memory X MB Beats Y%"
+    // These must be in close proximity (same container)
+    const resultPanels = document.querySelectorAll('[class*="border-border-tertiary"], [class*="rounded-lg"][class*="border"]');
+    for (const panel of resultPanels) {
+      const text = panel.innerText || '';
+      const hasRuntimeBeats = /Runtime[\s\S]{0,50}ms[\s\S]{0,50}Beats[\s\S]{0,20}%/.test(text);
+      const hasMemoryBeats = /Memory[\s\S]{0,50}MB[\s\S]{0,50}Beats[\s\S]{0,20}%/.test(text);
+      
+      if (hasRuntimeBeats && hasMemoryBeats) {
+        console.log('[LeetCode SR] Found accepted result panel with Runtime/Memory Beats');
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  isFailedSubmission() {
+    const pageText = document.body.innerText;
+    
+    // Check for failure indicators
+    const failurePatterns = [
+      'Wrong Answer',
+      'Time Limit Exceeded',
+      'Memory Limit Exceeded', 
+      'Runtime Error',
+      'Compile Error',
+      'Output Limit Exceeded'
+    ];
+    
+    // Also check the submission tab for these
+    const submissionTab = document.querySelector('#submission-detail_tab');
+    const tabText = submissionTab?.textContent?.trim() || '';
+    
+    for (const pattern of failurePatterns) {
+      if (tabText.includes(pattern) || pageText.includes(pattern)) {
+        // Make sure we're not just seeing these words in the problem description
+        // Check if they're in a red/failure context
+        const redElements = document.querySelectorAll('[class*="text-red"], [class*="text-yellow"], [class*="text-orange"]');
+        for (const el of redElements) {
+          if (el.textContent?.includes(pattern)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
   }
   
   showModal() {
