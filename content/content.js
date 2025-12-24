@@ -243,7 +243,7 @@ class LeetCodeSubmissionDetector {
     modal.innerHTML = `
       <div class="lsr-modal">
         <div class="lsr-modal-header">
-          <h2>🎉 Problem Accepted!</h2>
+          <h2>🎉 Add to LeetRecall</h2>
           <button class="lsr-close-btn">&times;</button>
         </div>
         <div class="lsr-modal-body">

@@ -275,3 +275,609 @@ header h1 {
 .day-details::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 161, 22, 0.5);
 }
+
+/* Header tabs */
+.header-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.tab-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #888;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: rgba(255, 161, 22, 0.2);
+  color: #ffa116;
+}
+
+/* Views */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* Problem item with checkbox */
+.problem-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.problem-item.completed {
+  opacity: 0.6;
+}
+
+.problem-checkbox {
+  flex-shrink: 0;
+}
+
+.completion-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #ffa116;
+}
+
+.completed-title {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Icon buttons */
+.btn-icon {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.btn-delete:hover, .btn-delete-full:hover {
+  color: #ff375f;
+}
+
+/* Manage view */
+.manage-container {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.manage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.manage-header h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffa116;
+}
+
+.manage-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-add-problem {
+  background: rgba(255, 161, 22, 0.2);
+  color: #ffa116;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-problem:hover {
+  background: rgba(255, 161, 22, 0.4);
+}
+
+.problem-count-badge {
+  background: rgba(255, 161, 22, 0.2);
+  color: #ffa116;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.manage-problems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.manage-problem-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.manage-problem-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.manage-problem-info .problem-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta-separator {
+  color: #555;
+  margin: 0 4px;
+}
+
+.progress-text {
+  color: #888;
+}
+
+.next-date {
+  color: #ffa116;
+}
+
+.manage-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  width: 340px;
+  max-width: 95%;
+  max-height: 90%;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffa116;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.edit-problem-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.edit-option-group {
+  margin-bottom: 16px;
+}
+
+.edit-option-group label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.edit-dates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.edit-date-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.edit-date-item.completed {
+  opacity: 0.6;
+}
+
+.edit-date-item.completed .edit-date-text {
+  color: #00b8a3;
+}
+
+.edit-date-text {
+  font-size: 13px;
+  color: #fff;
+}
+
+.no-dates {
+  color: #666;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+.edit-option-group input[type="date"] {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #fff;
+  font-size: 13px;
+  width: calc(100% - 60px);
+  margin-right: 8px;
+}
+
+.edit-option-group input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.btn-small {
+  background: rgba(255, 161, 22, 0.2);
+  border: none;
+  color: #ffa116;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-small:hover {
+  background: rgba(255, 161, 22, 0.4);
+}
+
+.modal-footer {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #ffa116;
+  color: #000;
+}
+
+.btn-primary:hover {
+  background: #ffb340;
+}
+
+.btn-danger {
+  background: rgba(255, 55, 95, 0.2);
+  color: #ff375f;
+}
+
+.btn-danger:hover {
+  background: rgba(255, 55, 95, 0.4);
+}
+
+/* Scrollbar for manage list */
+.manage-problems-list::-webkit-scrollbar,
+.edit-dates-list::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.manage-problems-list::-webkit-scrollbar-track,
+.edit-dates-list::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.manage-problems-list::-webkit-scrollbar-thumb,
+.edit-dates-list::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 161, 22, 0.3);
+  border-radius: 3px;
+}
+
+.manage-problems-list::-webkit-scrollbar-thumb:hover,
+.edit-dates-list::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 161, 22, 0.5);
+}
+
+/* Add Problem Modal */
+.add-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-modal.active {
+  display: flex;
+}
+
+.add-form-group {
+  margin-bottom: 14px;
+}
+
+.add-form-group label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.add-form-group input,
+.add-form-group select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.add-form-group input::placeholder {
+  color: #666;
+}
+
+.add-form-group select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.add-form-group select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.custom-intervals-group {
+  margin-top: 10px;
+}
+
+.custom-intervals-group small {
+  display: block;
+  color: #666;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.btn-add {
+  background: #ffa116;
+  color: #000;
+}
+
+.btn-add:hover {
+  background: #ffb340;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Add Problem Button */
+.add-problem-btn {
+  background: rgba(255, 161, 22, 0.2);
+  border: 1px dashed rgba(255, 161, 22, 0.4);
+  color: #ffa116;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.add-problem-btn:hover {
+  background: rgba(255, 161, 22, 0.3);
+  border-color: #ffa116;
+}
+
+.add-problem-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Help View */
+.help-container {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffa116;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-section h3 svg {
+  width: 16px;
+  height: 16px;
+}
+
+.help-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.help-list li {
+  font-size: 12px;
+  color: #ccc;
+  padding: 6px 0;
+  padding-left: 16px;
+  position: relative;
+}
+
+.help-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #ffa116;
+}
+
+.help-tip {
+  background: rgba(255, 161, 22, 0.1);
+  border-left: 3px solid #ffa116;
+  padding: 10px 12px;
+  margin-top: 16px;
+  border-radius: 0 8px 8px 0;
+}
+
+.help-tip p {
+  font-size: 11px;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.help-tip strong {
+  color: #ffa116;
+}
+
+.help-section p {
+  font-size: 12px;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.help-list li strong {
+  color: #ffa116;
+}
+
+.help-footer {
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.help-footer p {
+  font-size: 11px;
+  color: #888;
+}
+
+.help-footer a {
+  color: #ffa116;
+  text-decoration: none;
+}
+
+.help-footer a:hover {
+  text-decoration: underline;
+}
+
