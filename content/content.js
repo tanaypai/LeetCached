@@ -1,444 +1,624 @@
-// Content script to detect accepted submissions on LeetCode
+// LeetCached Content Script - Tokyo Night Theme
+// Detects accepted LeetCode submissions and shows add-to-schedule modal
 
 class LeetCodeSubmissionDetector {
   constructor() {
-    this.modalShown = false;
+    this.extensionIconUrl = chrome.runtime.getURL('icons/icon48.png');
+    this.schedulePresets = {
+      standard: [1, 3, 7, 14, 30],
+      intensive: [1, 2, 4, 7, 14],
+      relaxed: [2, 7, 14, 30, 60],
+      custom: []
+    };
+    this.currentPreset = 'standard';
+    this.isEditMode = false;
+    this.customIntervals = [1, 3, 7, 14, 30];
+    this.modal = null;
     this.init();
   }
-  
+
   init() {
-    // Watch for Submit button clicks
-    this.observeSubmitButton();
-    
-    // Reset state on URL changes
-    this.observeUrlChanges();
+    // Watch for submission results
+    this.observeSubmissionResults();
   }
-  
-  observeSubmitButton() {
-    // Use event delegation to catch submit button clicks
-    document.addEventListener('click', (e) => {
-      const target = e.target;
-      
-      // Check if clicked element is the Submit button
-      const isSubmitButton = 
-        target.closest('[data-e2e-locator="console-submit-button"]') ||
-        (target.closest('button') && target.closest('button').textContent?.trim().toLowerCase() === 'submit') ||
-        (target.tagName === 'BUTTON' && target.textContent?.trim().toLowerCase() === 'submit');
-      
-      if (isSubmitButton) {
-        console.log('[LeetCode SR] Submit button clicked');
-        this.modalShown = false;
-        
-        // Wait for result and show modal
-        this.waitForResultAndShowModal();
-      }
-    }, true);
-  }
-  
-  waitForResultAndShowModal() {
-    // Poll for accepted submission result
-    let attempts = 0;
-    const maxAttempts = 60; // 30 seconds max
-    
-    const checkResult = () => {
-      attempts++;
-      
-      if (this.modalShown || attempts > maxAttempts) {
-        return;
-      }
-      
-      // Log current state for debugging
-      console.log(`[LeetCode SR] Checking for accepted result (attempt ${attempts})...`);
-      
-      const isAccepted = this.isAcceptedSubmission();
-      
-      if (isAccepted) {
-        console.log('[LeetCode SR] Accepted submission detected!');
-        this.showModal();
-        return;
-      }
-      
-      // Check if we got a failure result (Wrong Answer, TLE, MLE, etc)
-      // If so, don't stop polling - user might resubmit
-      const isFailure = this.isFailedSubmission();
-      if (isFailure) {
-        console.log('[LeetCode SR] Failed submission detected, continuing to watch for resubmit...');
-      }
-      
-      // Keep polling
-      setTimeout(checkResult, 500);
-    };
-    
-    // Start checking after a short delay
-    setTimeout(checkResult, 1000);
-  }
-  
-  isAcceptedSubmission() {
-    // First, check if there's a failure indicator - if so, definitely NOT accepted
-    const failureIndicators = [
-      'Wrong Answer',
-      'Time Limit Exceeded', 
-      'Memory Limit Exceeded',
-      'Runtime Error',
-      'Compile Error',
-      'Output Limit Exceeded'
-    ];
-    
-    // Check for red failure text (text-red-60 class is used for failures)
-    const redElements = document.querySelectorAll('[class*="text-red"]');
-    for (const el of redElements) {
-      const text = el.textContent?.trim() || '';
-      for (const failure of failureIndicators) {
-        if (text.includes(failure)) {
-          console.log('[LeetCode SR] Found failure indicator:', failure);
-          return false;
-        }
-      }
-    }
-    
-    // Check for "X / Y testcases passed" where X !== Y (failure case)
-    const pageText = document.body.innerText;
-    const testcaseMatch = pageText.match(/(\d+)\s*\/\s*(\d+)\s*testcases passed/i);
-    if (testcaseMatch && testcaseMatch[1] !== testcaseMatch[2]) {
-      console.log('[LeetCode SR] Found failed testcases:', testcaseMatch[0]);
-      return false;
-    }
-    
-    // Now check for accepted: look for the specific result panel structure
-    // The accepted panel has "Runtime X ms Beats Y%" AND "Memory X MB Beats Y%"
-    // These must be in close proximity (same container)
-    const resultPanels = document.querySelectorAll('[class*="border-border-tertiary"], [class*="rounded-lg"][class*="border"]');
-    for (const panel of resultPanels) {
-      const text = panel.innerText || '';
-      const hasRuntimeBeats = /Runtime[\s\S]{0,50}ms[\s\S]{0,50}Beats[\s\S]{0,20}%/.test(text);
-      const hasMemoryBeats = /Memory[\s\S]{0,50}MB[\s\S]{0,50}Beats[\s\S]{0,20}%/.test(text);
-      
-      if (hasRuntimeBeats && hasMemoryBeats) {
-        console.log('[LeetCode SR] Found accepted result panel with Runtime/Memory Beats');
-        return true;
-      }
-    }
-    
-    return false;
-  }
-  
-  isFailedSubmission() {
-    const pageText = document.body.innerText;
-    
-    // Check for failure indicators
-    const failurePatterns = [
-      'Wrong Answer',
-      'Time Limit Exceeded',
-      'Memory Limit Exceeded', 
-      'Runtime Error',
-      'Compile Error',
-      'Output Limit Exceeded'
-    ];
-    
-    // Also check the submission tab for these
-    const submissionTab = document.querySelector('#submission-detail_tab');
-    const tabText = submissionTab?.textContent?.trim() || '';
-    
-    for (const pattern of failurePatterns) {
-      if (tabText.includes(pattern) || pageText.includes(pattern)) {
-        // Make sure we're not just seeing these words in the problem description
-        // Check if they're in a red/failure context
-        const redElements = document.querySelectorAll('[class*="text-red"], [class*="text-yellow"], [class*="text-orange"]');
-        for (const el of redElements) {
-          if (el.textContent?.includes(pattern)) {
-            return true;
+
+  observeSubmissionResults() {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (this.isAcceptedSubmission(node)) {
+              this.handleAcceptedSubmission();
+            }
           }
         }
       }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  isAcceptedSubmission(node) {
+    // Check for "Accepted" submission result
+    const acceptedSelectors = [
+      '[data-e2e-locator="submission-result"]',
+      '.text-green-s',
+      '[class*="success"]'
+    ];
+
+    for (const selector of acceptedSelectors) {
+      const elements = node.matches?.(selector) ? [node] : node.querySelectorAll?.(selector) || [];
+      for (const el of elements) {
+        const text = el.textContent?.toLowerCase() || '';
+        if (text.includes('accepted') || text.includes('success')) {
+          return true;
+        }
+      }
     }
-    
+
     return false;
   }
-  
-  showModal() {
-    if (this.modalShown) return;
-    this.modalShown = true;
-    
-    const problemInfo = this.extractProblemInfo();
-    if (problemInfo) {
-      this.showAddToSpacedRepModal(problemInfo);
-    }
-  }
-  
-  observeUrlChanges() {
-    let lastUrl = location.href;
-    new MutationObserver(() => {
-      const url = location.href;
-      if (url !== lastUrl) {
-        lastUrl = url;
-        this.modalShown = false;
-      }
-    }).observe(document, { subtree: true, childList: true });
-  }
-  
-  extractProblemInfo() {
-    // Extract problem title from the page
+
+  getProblemInfo() {
+    // Get problem title from multiple possible sources
+    let title = 'Unknown Problem';
     const titleSelectors = [
       '[data-cy="question-title"]',
-      'a[href*="/problems/"][class*="title"]',
-      'div[class*="title"] a[href*="/problems/"]',
-      '[class*="text-title"]',
-      'h4 a[href*="/problems/"]'
+      'div[class*="text-title-large"]',
+      'a[class*="text-title-large"]',
+      'div[data-track-load="description_content"] h4',
+      '.text-lg.font-medium',
+      'div[class*="title"]',
+      'a[href*="/problems/"]'
     ];
-    
-    let title = null;
+
     for (const selector of titleSelectors) {
       const el = document.querySelector(selector);
-      if (el && el.textContent) {
-        title = el.textContent.trim();
-        // Clean up title - remove problem number prefix if present
-        title = title.replace(/^\d+\.\s*/, '');
-        break;
+      if (el?.textContent) {
+        const text = el.textContent.trim();
+        if (text && text !== 'Unknown Problem' && text.length > 0 && text.length < 200) {
+          title = text;
+          // Extract just the problem name if it includes number
+          const match = title.match(/^\d+\.\s*(.+)$/);
+          if (match) title = match[1];
+          break;
+        }
       }
     }
-    
-    // Fallback: extract from URL
-    if (!title) {
-      const match = window.location.pathname.match(/\/problems\/([^\/]+)/);
-      if (match) {
-        title = match[1].split('-').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
+
+    // Fallback: try to get title from page title
+    if (title === 'Unknown Problem') {
+      const pageTitle = document.title;
+      const titleMatch = pageTitle.match(/^(.+?)\s*[-–|]/);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
       }
     }
-    
-    // Extract difficulty
-    let difficulty = 'Medium';
-    const difficultyEl = document.querySelector('[class*="difficulty"], [diff], .text-olive, .text-yellow, .text-pink, [class*="easy"], [class*="medium"], [class*="hard"]');
-    if (difficultyEl) {
-      const text = difficultyEl.textContent?.toLowerCase() || '';
-      const className = difficultyEl.className?.toLowerCase() || '';
-      if (text.includes('easy') || className.includes('easy') || className.includes('olive')) {
-        difficulty = 'Easy';
-      } else if (text.includes('hard') || className.includes('hard') || className.includes('pink')) {
-        difficulty = 'Hard';
-      }
-    }
-    
-    // Extract problem ID from URL
+
+    // Get problem number from URL
     const urlMatch = window.location.pathname.match(/\/problems\/([^\/]+)/);
-    const problemSlug = urlMatch ? urlMatch[1] : null;
+    const problemSlug = urlMatch ? urlMatch[1] : '';
+    const problemNumber = this.extractProblemNumber();
+
+    // If still unknown, try to format from slug
+    if (title === 'Unknown Problem' && problemSlug) {
+      title = problemSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    // Get difficulty
+    let difficulty = 'Medium';
+    const difficultySelectors = [
+      'div[class*="text-difficulty-easy"]',
+      'div[class*="text-difficulty-medium"]', 
+      'div[class*="text-difficulty-hard"]',
+      'div[class*="text-olive"]',
+      'div[class*="text-yellow"]',
+      'div[class*="text-pink"]',
+      '[class*="difficulty"]',
+      '[diff]'
+    ];
     
+    for (const selector of difficultySelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        const text = el.textContent?.toLowerCase() || '';
+        const className = el.className?.toLowerCase() || '';
+        if (text.includes('easy') || className.includes('easy') || className.includes('olive')) {
+          difficulty = 'Easy';
+          break;
+        } else if (text.includes('hard') || className.includes('hard') || className.includes('pink')) {
+          difficulty = 'Hard';
+          break;
+        } else if (text.includes('medium') || className.includes('medium') || className.includes('yellow')) {
+          difficulty = 'Medium';
+          break;
+        }
+      }
+    }
+
+    // Try to get category/topics
+    let category = 'Algorithm';
+    let topics = [];
+    
+    // Look for topic links with href="/tag/..."
+    const topicLinks = document.querySelectorAll('a[href^="/tag/"]');
+    if (topicLinks.length > 0) {
+      topics = Array.from(topicLinks).map(el => el.textContent?.trim()).filter(Boolean);
+      category = topics[0] || 'Algorithm';
+    }
+    
+    // Fallback to old method if no topics found
+    if (topics.length === 0) {
+      const tagEls = document.querySelectorAll('[class*="tag"], [class*="topic"]');
+      if (tagEls.length > 0) {
+        topics = Array.from(tagEls).map(el => el.textContent?.trim()).filter(Boolean);
+        category = topics[0] || 'Algorithm';
+      }
+    }
+
     return {
-      title: title || 'Unknown Problem',
+      title: problemNumber ? `${problemNumber}. ${title}` : title,
+      slug: problemSlug,
       difficulty,
-      url: window.location.href.split('?')[0].split('/description')[0],
-      slug: problemSlug
+      category,
+      topics,
+      url: window.location.href
     };
   }
-  
-  showAddToSpacedRepModal(problemInfo) {
-    // Remove existing modal if any
-    const existingModal = document.getElementById('leetcode-spaced-rep-modal');
-    if (existingModal) existingModal.remove();
-    
-    const modal = document.createElement('div');
-    modal.id = 'leetcode-spaced-rep-modal';
-    modal.className = 'lsr-modal-overlay';
-    modal.innerHTML = `
+
+  extractProblemNumber() {
+    // Try to get problem number from various sources
+    const titleEl = document.querySelector('[data-cy="question-title"]');
+    if (titleEl) {
+      const match = titleEl.textContent?.match(/^(\d+)\./);
+      if (match) return match[1];
+    }
+    return '';
+  }
+
+  handleAcceptedSubmission() {
+    // Delay to allow the success animation to complete
+    setTimeout(() => {
+      const problemInfo = this.getProblemInfo();
+      this.showAddToScheduleModal(problemInfo);
+    }, 1500);
+  }
+
+  showAddToScheduleModal(problemInfo) {
+    // Remove any existing modal
+    this.closeModal();
+
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'lsr-modal-overlay';
+    overlay.innerHTML = this.getModalHTML(problemInfo);
+
+    document.body.appendChild(overlay);
+    this.modal = overlay;
+
+    // Setup event listeners
+    this.setupModalEvents(problemInfo);
+  }
+
+  getModalHTML(problemInfo) {
+    const difficultyClass = problemInfo.difficulty.toLowerCase();
+    const previewDates = this.getPreviewDates(this.schedulePresets[this.currentPreset]);
+    const topicsHtml = problemInfo.topics && problemInfo.topics.length > 0
+      ? problemInfo.topics.map(topic => `<span class="lsr-topic-tag">${topic}</span>`).join('')
+      : `<span class="lsr-topic-tag">${problemInfo.category}</span>`;
+
+    return `
       <div class="lsr-modal">
         <div class="lsr-modal-header">
-          <h2>🎉 Add to LeetRecall</h2>
-          <button class="lsr-close-btn">&times;</button>
+          <div class="lsr-header-brand">
+            <img src="${this.extensionIconUrl}" alt="LeetCached" class="lsr-logo">
+            <h2>LeetCached</h2>
+          </div>
+          <button class="lsr-close-btn" data-action="close">&times;</button>
         </div>
+
         <div class="lsr-modal-body">
+          <!-- Problem Info -->
           <div class="lsr-problem-info">
+            <div class="lsr-problem-meta">
+              <span class="lsr-difficulty lsr-${difficultyClass}">${problemInfo.difficulty}</span>
+            </div>
             <h3>${problemInfo.title}</h3>
-            <span class="lsr-difficulty lsr-${problemInfo.difficulty.toLowerCase()}">${problemInfo.difficulty}</span>
+            <div class="lsr-topics-row">${topicsHtml}</div>
           </div>
-          
-          <p class="lsr-prompt">Add to spaced repetition schedule?</p>
-          
-          <div class="lsr-options">
-            <div class="lsr-option-group">
-              <label>Repetition Intervals:</label>
-              <select id="lsr-interval-preset">
-                <option value="standard">Standard (1d, 3d, 1w, 2w, 1m)</option>
-                <option value="intensive">Intensive (1d, 2d, 4d, 1w, 2w)</option>
-                <option value="relaxed">Relaxed (1d, 1w, 2w, 1m, 2m)</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            
-            <div class="lsr-option-group" id="lsr-rep-count-group">
-              <label>Number of Repetitions:</label>
-              <select id="lsr-rep-count">
-                <option value="3">3 repetitions</option>
-                <option value="5" selected>5 repetitions</option>
-                <option value="7">7 repetitions</option>
-                <option value="10">10 repetitions</option>
-              </select>
-            </div>
-            
-            <div class="lsr-option-group lsr-custom-intervals" id="lsr-custom-intervals" style="display: none;">
-              <label>Custom Intervals (comma-separated days):</label>
-              <input type="text" id="lsr-custom-input" placeholder="e.g., 1, 3, 7, 14, 30" value="1, 3, 7, 14, 30">
-              <small class="lsr-hint">Enter days from today, separated by commas</small>
-            </div>
+
+          <!-- Schedule Options -->
+          <span class="lsr-section-label">Schedule Preset</span>
+          <div class="lsr-schedule-grid">
+            <label class="lsr-schedule-option">
+              <input type="radio" name="schedule" value="standard" ${this.currentPreset === 'standard' ? 'checked' : ''}>
+              <div class="lsr-schedule-card">
+                <div class="lsr-schedule-card-header">
+                  <span class="lsr-schedule-card-title">Standard</span>
+                  <div class="lsr-radio-indicator"></div>
+                </div>
+                <span class="lsr-schedule-card-desc">1, 3, 7, 14, 30 days</span>
+              </div>
+            </label>
+            <label class="lsr-schedule-option">
+              <input type="radio" name="schedule" value="intensive" ${this.currentPreset === 'intensive' ? 'checked' : ''}>
+              <div class="lsr-schedule-card">
+                <div class="lsr-schedule-card-header">
+                  <span class="lsr-schedule-card-title">Intensive</span>
+                  <div class="lsr-radio-indicator"></div>
+                </div>
+                <span class="lsr-schedule-card-desc">1, 2, 4, 7, 14 days</span>
+              </div>
+            </label>
+            <label class="lsr-schedule-option">
+              <input type="radio" name="schedule" value="relaxed" ${this.currentPreset === 'relaxed' ? 'checked' : ''}>
+              <div class="lsr-schedule-card">
+                <div class="lsr-schedule-card-header">
+                  <span class="lsr-schedule-card-title">Relaxed</span>
+                  <div class="lsr-radio-indicator"></div>
+                </div>
+                <span class="lsr-schedule-card-desc">2, 7, 14, 30, 60 days</span>
+              </div>
+            </label>
+            <label class="lsr-schedule-option">
+              <input type="radio" name="schedule" value="custom" ${this.currentPreset === 'custom' ? 'checked' : ''}>
+              <div class="lsr-schedule-card">
+                <div class="lsr-schedule-card-header">
+                  <span class="lsr-schedule-card-title">Custom</span>
+                  <div class="lsr-radio-indicator"></div>
+                </div>
+                <span class="lsr-schedule-card-desc">Set your own intervals</span>
+              </div>
+            </label>
           </div>
-          
+
+          <!-- Preview / Edit Section -->
           <div class="lsr-preview">
-            <label>Scheduled Review Dates:</label>
-            <div id="lsr-dates-preview" class="lsr-dates-list"></div>
+            <div class="lsr-preview-header">
+              <span class="lsr-preview-title">Upcoming Reviews</span>
+              <a class="lsr-edit-link" data-action="toggle-edit">${this.isEditMode ? 'Done' : 'Edit'}</a>
+            </div>
+            <div class="lsr-timeline-container">
+              ${this.isEditMode ? this.getEditTimelineHTML() : this.getPreviewTimelineHTML(previewDates)}
+            </div>
           </div>
         </div>
+
         <div class="lsr-modal-footer">
-          <button class="lsr-btn lsr-btn-secondary" id="lsr-skip-btn">Skip</button>
-          <button class="lsr-btn lsr-btn-primary" id="lsr-add-btn">Add to Schedule</button>
+          <button class="lsr-btn lsr-btn-secondary" data-action="skip">Skip Problem</button>
+          <button class="lsr-btn lsr-btn-primary" data-action="add">
+            ${this.isEditMode ? 'Save Schedule' : 'Add to Schedule'}
+          </button>
         </div>
       </div>
     `;
-    
-    document.body.appendChild(modal);
-    
-    // Setup event listeners
-    this.setupModalListeners(modal, problemInfo);
-    
-    // Initial preview
-    this.updateDatesPreview();
   }
-  
-  setupModalListeners(modal, problemInfo) {
-    const closeBtn = modal.querySelector('.lsr-close-btn');
-    const skipBtn = modal.querySelector('#lsr-skip-btn');
-    const addBtn = modal.querySelector('#lsr-add-btn');
-    const intervalSelect = modal.querySelector('#lsr-interval-preset');
-    const repCountSelect = modal.querySelector('#lsr-rep-count');
-    const customIntervalsDiv = modal.querySelector('#lsr-custom-intervals');
-    const repCountGroup = modal.querySelector('#lsr-rep-count-group');
-    const customInput = modal.querySelector('#lsr-custom-input');
-    
-    const closeModal = () => {
-      modal.remove();
-    };
-    
-    closeBtn.addEventListener('click', closeModal);
-    skipBtn.addEventListener('click', closeModal);
-    
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    
-    intervalSelect.addEventListener('change', () => {
-      const isCustom = intervalSelect.value === 'custom';
-      customIntervalsDiv.style.display = isCustom ? 'block' : 'none';
-      repCountGroup.style.display = isCustom ? 'none' : 'block';
-      this.updateDatesPreview();
-    });
-    
-    repCountSelect.addEventListener('change', () => this.updateDatesPreview());
-    customInput.addEventListener('input', () => this.updateDatesPreview());
-    
-    addBtn.addEventListener('click', async () => {
-      const dates = this.calculateScheduledDates();
-      await this.saveProblem(problemInfo, dates);
-      
-      // Show success feedback
-      addBtn.textContent = '✓ Added!';
-      addBtn.disabled = true;
-      
-      setTimeout(closeModal, 1000);
-    });
+
+  getPreviewTimelineHTML(previewDates) {
+    return `
+      <div class="lsr-timeline">
+        ${previewDates.map((item, index) => `
+          <div class="lsr-timeline-item">
+            <div class="lsr-timeline-dot"></div>
+            <span class="lsr-timeline-label">${item.label}</span>
+            <span class="lsr-timeline-date">${item.dateStr}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
-  
-  getIntervalDays(preset, count) {
-    const intervals = {
-      standard: [1, 3, 7, 14, 30, 60, 90],
-      intensive: [1, 2, 4, 7, 14, 21, 30],
-      relaxed: [1, 7, 14, 30, 60, 90, 120]
-    };
-    
-    return intervals[preset].slice(0, count);
+
+  getEditTimelineHTML() {
+    const intervals = this.currentPreset === 'custom' 
+      ? this.customIntervals 
+      : this.schedulePresets[this.currentPreset];
+
+    return `
+      <div class="lsr-timeline-edit">
+        ${intervals.map((days, index) => {
+          const date = new Date();
+          date.setDate(date.getDate() + days);
+          const dateValue = date.toISOString().split('T')[0];
+          
+          return `
+            <div class="lsr-timeline-edit-item" data-index="${index}">
+              <div class="lsr-timeline-edit-dot"></div>
+              <input type="number" class="lsr-edit-input number" value="${days}" min="1" max="365" data-field="days">
+              <select class="lsr-edit-input unit" data-field="unit">
+                <option value="days" selected>Days</option>
+                <option value="weeks">Weeks</option>
+              </select>
+              <input type="date" class="lsr-edit-input date" value="${dateValue}" data-field="date">
+              <button class="lsr-remove-btn" data-action="remove-interval" title="Remove">&times;</button>
+            </div>
+          `;
+        }).join('')}
+        <button class="lsr-add-repetition" data-action="add-interval">
+          <span>+</span> Add Repetition
+        </button>
+      </div>
+    `;
   }
-  
-  getCustomIntervalDays() {
-    const customInput = document.querySelector('#lsr-custom-input');
-    const inputValue = customInput?.value || '1, 3, 7, 14, 30';
-    
-    // Parse comma-separated values and filter valid numbers
-    const intervals = inputValue
-      .split(',')
-      .map(s => parseInt(s.trim()))
-      .filter(n => !isNaN(n) && n > 0)
-      .sort((a, b) => a - b);
-    
-    return intervals.length > 0 ? intervals : [1, 3, 7, 14, 30];
-  }
-  
-  calculateScheduledDates() {
-    const intervalSelect = document.querySelector('#lsr-interval-preset');
-    const repCountSelect = document.querySelector('#lsr-rep-count');
-    
-    const preset = intervalSelect.value;
-    let intervals;
-    
-    if (preset === 'custom') {
-      intervals = this.getCustomIntervalDays();
-    } else {
-      const count = parseInt(repCountSelect.value);
-      intervals = this.getIntervalDays(preset, count);
-    }
-    
+
+  getPreviewDates(intervals) {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
     return intervals.map(days => {
       const date = new Date(today);
       date.setDate(date.getDate() + days);
+      
+      let label;
+      if (days === 1) {
+        label = 'Tomorrow';
+      } else if (days < 7) {
+        label = `In ${days} days`;
+      } else if (days === 7) {
+        label = 'In 1 week';
+      } else if (days < 30) {
+        const weeks = Math.round(days / 7);
+        label = `In ${weeks} week${weeks > 1 ? 's' : ''}`;
+      } else {
+        const months = Math.round(days / 30);
+        label = `In ${months} month${months > 1 ? 's' : ''}`;
+      }
+
+      const options = { month: 'short', day: 'numeric' };
+      const dateStr = date.toLocaleDateString('en-US', options);
+
+      return { days, label, dateStr, date };
+    });
+  }
+
+  setupModalEvents(problemInfo) {
+    if (!this.modal) return;
+
+    // Close button
+    this.modal.querySelector('[data-action="close"]')?.addEventListener('click', () => {
+      this.closeModal();
+    });
+
+    // Click outside to close
+    this.modal.addEventListener('click', (e) => {
+      if (e.target === this.modal) {
+        this.closeModal();
+      }
+    });
+
+    // Schedule radio buttons
+    this.modal.querySelectorAll('input[name="schedule"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.currentPreset = e.target.value;
+        this.updatePreview();
+      });
+    });
+
+    // Edit toggle
+    this.modal.querySelector('[data-action="toggle-edit"]')?.addEventListener('click', () => {
+      this.isEditMode = !this.isEditMode;
+      this.updatePreview();
+    });
+
+    // Skip button
+    this.modal.querySelector('[data-action="skip"]')?.addEventListener('click', () => {
+      this.closeModal();
+    });
+
+    // Add button
+    this.modal.querySelector('[data-action="add"]')?.addEventListener('click', () => {
+      this.addProblemToSchedule(problemInfo);
+    });
+
+    // Handle edit mode specific events
+    this.setupEditModeEvents();
+  }
+
+  setupEditModeEvents() {
+    // Add interval button
+    this.modal?.querySelector('[data-action="add-interval"]')?.addEventListener('click', () => {
+      this.addInterval();
+    });
+
+    // Remove interval buttons
+    this.modal?.querySelectorAll('[data-action="remove-interval"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const item = e.target.closest('.lsr-timeline-edit-item');
+        const index = parseInt(item.dataset.index);
+        this.removeInterval(index);
+      });
+    });
+
+    // Number input changes
+    this.modal?.querySelectorAll('.lsr-edit-input.number').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const item = e.target.closest('.lsr-timeline-edit-item');
+        const index = parseInt(item.dataset.index);
+        this.updateIntervalDays(index, parseInt(e.target.value));
+      });
+    });
+
+    // Date input changes
+    this.modal?.querySelectorAll('.lsr-edit-input.date').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const item = e.target.closest('.lsr-timeline-edit-item');
+        const index = parseInt(item.dataset.index);
+        this.updateIntervalFromDate(index, e.target.value);
+      });
+    });
+
+    // Unit changes
+    this.modal?.querySelectorAll('.lsr-edit-input.unit').forEach(select => {
+      select.addEventListener('change', (e) => {
+        const item = e.target.closest('.lsr-timeline-edit-item');
+        const index = parseInt(item.dataset.index);
+        const numberInput = item.querySelector('.lsr-edit-input.number');
+        const days = parseInt(numberInput.value);
+        
+        if (e.target.value === 'weeks') {
+          this.updateIntervalDays(index, days * 7);
+        }
+      });
+    });
+  }
+
+  addInterval() {
+    if (this.currentPreset === 'custom') {
+      const lastInterval = this.customIntervals[this.customIntervals.length - 1] || 30;
+      this.customIntervals.push(lastInterval + 14);
+    } else {
+      // Switch to custom mode
+      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
+      const lastInterval = this.customIntervals[this.customIntervals.length - 1] || 30;
+      this.customIntervals.push(lastInterval + 14);
+      this.currentPreset = 'custom';
+      
+      // Update radio button
+      const customRadio = this.modal?.querySelector('input[value="custom"]');
+      if (customRadio) customRadio.checked = true;
+    }
+    this.updatePreview();
+  }
+
+  removeInterval(index) {
+    if (this.currentPreset !== 'custom') {
+      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
+      this.currentPreset = 'custom';
+      const customRadio = this.modal?.querySelector('input[value="custom"]');
+      if (customRadio) customRadio.checked = true;
+    }
+    
+    this.customIntervals.splice(index, 1);
+    this.updatePreview();
+  }
+
+  updateIntervalDays(index, days) {
+    if (this.currentPreset !== 'custom') {
+      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
+      this.currentPreset = 'custom';
+      const customRadio = this.modal?.querySelector('input[value="custom"]');
+      if (customRadio) customRadio.checked = true;
+    }
+    
+    this.customIntervals[index] = Math.max(1, Math.min(365, days));
+    // Sort intervals
+    this.customIntervals.sort((a, b) => a - b);
+    this.updatePreview();
+  }
+
+  updateIntervalFromDate(index, dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(dateStr);
+    const diffTime = selectedDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      this.updateIntervalDays(index, diffDays);
+    }
+  }
+
+  updatePreview() {
+    if (!this.modal) return;
+
+    const container = this.modal.querySelector('.lsr-timeline-container');
+    const editLink = this.modal.querySelector('[data-action="toggle-edit"]');
+    const addBtn = this.modal.querySelector('[data-action="add"]');
+
+    if (container) {
+      const intervals = this.currentPreset === 'custom' 
+        ? this.customIntervals 
+        : this.schedulePresets[this.currentPreset];
+      const previewDates = this.getPreviewDates(intervals);
+      
+      container.innerHTML = this.isEditMode 
+        ? this.getEditTimelineHTML() 
+        : this.getPreviewTimelineHTML(previewDates);
+      
+      if (this.isEditMode) {
+        this.setupEditModeEvents();
+      }
+    }
+
+    if (editLink) {
+      editLink.textContent = this.isEditMode ? 'Done' : 'Edit';
+    }
+
+    if (addBtn) {
+      addBtn.textContent = this.isEditMode ? 'Save Schedule' : 'Add to Schedule';
+    }
+  }
+
+  async addProblemToSchedule(problemInfo) {
+    const intervals = this.currentPreset === 'custom' 
+      ? this.customIntervals 
+      : this.schedulePresets[this.currentPreset];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const scheduledDates = intervals.map(days => {
+      const date = new Date(today);
+      date.setDate(date.getDate() + days);
       return date.toISOString().split('T')[0];
     });
-  }
-  
-  updateDatesPreview() {
-    const previewEl = document.querySelector('#lsr-dates-preview');
-    const dates = this.calculateScheduledDates();
-    
-    const formatDate = (dateStr) => {
-      const date = new Date(dateStr + 'T00:00:00');
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
-      });
-    };
-    
-    previewEl.innerHTML = dates.map((date, i) => `
-      <div class="lsr-date-item">
-        <span class="lsr-rep-num">Rep ${i + 1}</span>
-        <span class="lsr-date">${formatDate(date)}</span>
-      </div>
-    `).join('');
-  }
-  
-  async saveProblem(problemInfo, scheduledDates) {
-    const result = await chrome.storage.local.get(['spacedRepProblems']);
-    const problems = result.spacedRepProblems || {};
-    
-    const problemId = problemInfo.slug || problemInfo.title.toLowerCase().replace(/\s+/g, '-');
-    
-    problems[problemId] = {
+
+    // Use slug as the problem ID (matches popup format)
+    const problemId = problemInfo.slug;
+
+    const problem = {
       title: problemInfo.title,
       difficulty: problemInfo.difficulty,
+      category: problemInfo.category,
+      topics: problemInfo.topics || [],
       url: problemInfo.url,
-      addedDate: new Date().toISOString().split('T')[0],
-      scheduledDates: scheduledDates,
+      addedDate: today.toISOString().split('T')[0],
+      scheduledDates,
       completedDates: []
     };
-    
-    await chrome.storage.local.set({ spacedRepProblems: problems });
-    
-    // Notify background script
-    chrome.runtime.sendMessage({
-      type: 'PROBLEM_ADDED',
-      problem: problems[problemId]
-    });
+
+    try {
+      // Get existing problems (use same key as popup: spacedRepProblems)
+      const result = await chrome.storage.local.get(['spacedRepProblems']);
+      const problems = result.spacedRepProblems || {};
+
+      // Add or update problem using slug as key
+      problems[problemId] = problem;
+
+      // Save updated problems
+      await chrome.storage.local.set({ spacedRepProblems: problems });
+
+      // Show success feedback
+      this.showSuccessFeedback();
+    } catch (error) {
+      console.error('Failed to save problem:', error);
+    }
+  }
+
+  showSuccessFeedback() {
+    const addBtn = this.modal?.querySelector('[data-action="add"]');
+    if (addBtn) {
+      addBtn.innerHTML = '✓ Added';
+      addBtn.disabled = true;
+      addBtn.style.background = 'var(--tn-green)';
+    }
+
+    // Close modal after delay
+    setTimeout(() => {
+      this.closeModal();
+    }, 1200);
+  }
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.remove();
+      this.modal = null;
+    }
+    // Reset edit mode for next time
+    this.isEditMode = false;
   }
 }
 
-// Initialize the detector
+// Initialize
 new LeetCodeSubmissionDetector();

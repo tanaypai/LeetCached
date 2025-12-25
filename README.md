@@ -1,4 +1,4 @@
-# LeetRecall
+# LeetCached
 
 A Chrome extension that helps you retain LeetCode solutions through spaced repetition scheduling.
 
@@ -21,7 +21,7 @@ A Chrome extension that helps you retain LeetCode solutions through spaced repet
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" in the top right corner
 4. Click "Load unpacked" and select the extension folder
-5. The LeetRecall icon will appear in your toolbar
+5. The LeetCached icon will appear in your toolbar
 
 ## Usage
 
@@ -47,7 +47,7 @@ This pattern helps transfer knowledge from short-term to long-term memory, makin
 
 ## Privacy
 
-LeetRecall respects your privacy:
+LeetCached respects your privacy:
 - All data is stored **locally** on your device using Chrome's storage API
 - **No data is sent** to external servers
 - **No tracking** or analytics
@@ -65,7 +65,7 @@ LeetRecall respects your privacy:
 
 ### Project Structure
 ```
-LeetRecall/
+LeetCached/
 ├── manifest.json        # Extension configuration
 ├── background/
 │   └── background.js    # Service worker for badge updates
