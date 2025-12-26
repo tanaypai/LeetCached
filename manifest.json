@@ -2,10 +2,9 @@
   "manifest_version": 3,
   "name": "LeetCached",
   "version": "1.0.0",
-  "description": "Never forget a LeetCode solution again! Master coding patterns with smart spaced repetition scheduling.",
+  "description": "Track and schedule spaced repetitions for LeetCode problems",
   "permissions": [
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "https://leetcode.com/*"
