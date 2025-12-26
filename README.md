@@ -1,17 +1,42 @@
 # LeetCached
 
-A Chrome extension that helps you retain LeetCode solutions through spaced repetition scheduling.
+A Chrome extension that helps you retain LeetCode solutions through spaced repetition scheduling. Built with a beautiful **Tokyo Night** color theme.
 
-## Features
+![LeetCached Banner](screenshots/banner.png)
 
-- **Automatic Detection**: Detects when you successfully submit a LeetCode problem
-- **Spaced Repetition Scheduling**: Automatically schedules review dates using proven spaced repetition intervals (1, 3, 7, 14, 30 days)
-- **Calendar View**: Visual calendar showing upcoming problems to review
-- **Badge Notifications**: Shows count of problems due for review today
-- **Problem Management**: Edit, reschedule, or remove problems from your review list
-- **Custom Intervals**: Configure your own spaced repetition intervals
+## ✨ Features
 
-## Installation
+- **🎨 Tokyo Night Theme**: Beautiful dark theme inspired by the popular Tokyo Night color palette
+- **🔍 Automatic Detection**: Detects when you successfully submit a LeetCode problem and prompts to add it to your schedule
+- **➕ Toolbar Button**: "Add to LeetCached" button in LeetCode's toolbar lets you add any problem anytime
+- **📅 Spaced Repetition Scheduling**: Automatically schedules review dates using proven intervals (1, 3, 7, 14, 30 days)
+- **🗓️ Calendar View**: Visual calendar showing upcoming problems to review with inline problem sidebar
+- ** Problem Management**: Edit, reschedule, or remove problems from your review list
+- **⚙️ Custom Intervals**: Choose from preset schedules (Standard, Intensive, Relaxed) or set custom intervals
+
+## 📸 Screenshots
+
+### Calendar View
+![Calendar View](screenshots/calendar-view.png)
+*Visual calendar with scheduled problems and sidebar showing daily reviews*
+
+### Manage View
+![Manage View](screenshots/manage-view.png)
+*Search, sort, and manage all your tracked problems*
+
+### Add to LeetCached Button
+![Toolbar Button](screenshots/toolbar-button.png)
+*One-click button in LeetCode's toolbar to add any problem*
+
+### Add Problem Modal
+![Add Modal](screenshots/add-modal.png)
+*Choose your spaced repetition schedule when adding problems*
+
+### Help & Support
+![Help View](screenshots/help-view.png)
+*Built-in help center with getting started guide and FAQs*
+
+## 🚀 Installation
 
 ### From Chrome Web Store
 *(Coming soon)*
@@ -23,29 +48,43 @@ A Chrome extension that helps you retain LeetCode solutions through spaced repet
 4. Click "Load unpacked" and select the extension folder
 5. The LeetCached icon will appear in your toolbar
 
-## Usage
+## 📖 Usage
 
-1. **Solve a LeetCode problem** - Navigate to any problem on [leetcode.com](https://leetcode.com) and submit your solution
-2. **Add to schedule** - When your submission is accepted, a modal will appear asking if you want to add it to your spaced repetition schedule
-3. **Choose your interval** - Select a preset interval or configure custom review dates
-4. **Review problems** - Click the extension icon to see your calendar and upcoming reviews
-5. **Stay on track** - The badge on the extension icon shows how many problems are due today
+1. **Install & Pin** - Pin LeetCached to your toolbar for easy access
+2. **Add Problems** - Problems are auto-detected when accepted, or click "Add to LeetCached" in the LeetCode toolbar anytime
+3. **Choose Schedule** - Select a preset interval (Standard, Intensive, Relaxed) or configure custom review dates
+4. **Review Problems** - Click the extension icon to see your calendar and upcoming reviews
+5. **Stay on Track** - Check the stats cards to see problems due today and this week
 
-## How Spaced Repetition Works
+## 🎨 Tokyo Night Theme
+
+LeetCached features a carefully crafted dark theme using the Tokyo Night color palette:
+
+| Element | Color | Hex |
+|---------|-------|-----|
+| Background | Dark Blue | `#1a1b26` |
+| Surface | Slate | `#24283b` |
+| Primary | Blue | `#7aa2f7` |
+| Secondary | Purple | `#bb9af7` |
+| Success | Green | `#9ece6a` |
+| Warning | Orange | `#ff9e64` |
+| Text | Light Blue | `#c0caf5` |
+
+## 📚 How Spaced Repetition Works
 
 Spaced repetition is a learning technique that involves reviewing material at increasing intervals:
 
-| Review | Interval |
-|--------|----------|
-| 1st | 1 day |
-| 2nd | 3 days |
-| 3rd | 7 days |
-| 4th | 14 days |
-| 5th | 30 days |
+### Preset Schedules
+
+| Preset | Intervals (days) | Best For |
+|--------|------------------|----------|
+| **Standard** | 1, 3, 7, 14, 30 | Balanced retention |
+| **Intensive** | 1, 2, 4, 7, 14 | Quick mastery |
+| **Relaxed** | 2, 7, 14, 30, 60 | Long-term retention |
 
 This pattern helps transfer knowledge from short-term to long-term memory, making it ideal for retaining coding patterns and problem-solving techniques.
 
-## Privacy
+## 🔒 Privacy
 
 LeetCached respects your privacy:
 - All data is stored **locally** on your device using Chrome's storage API
@@ -53,42 +92,55 @@ LeetCached respects your privacy:
 - **No tracking** or analytics
 - **No account required**
 
-## Permissions
+## 🔐 Permissions
 
 | Permission | Purpose |
 |------------|---------|
 | `storage` | Store your tracked problems and review schedule locally |
-| `tabs` | Display badge notification with count of problems due today |
-| `host_permissions` (leetcode.com) | Detect accepted submissions on LeetCode problem pages |
+| `host_permissions` (leetcode.com) | Detect accepted submissions and inject toolbar button |
 
-## Development
+## 🛠️ Development
 
 ### Project Structure
 ```
 LeetCached/
-├── manifest.json        # Extension configuration
+├── manifest.json          # Extension configuration
 ├── background/
-│   └── background.js    # Service worker for badge updates
+│   └── background.js      # Service worker for extension events
 ├── content/
-│   ├── content.js       # Submission detection on LeetCode
-│   └── content.css      # Modal styling
+│   ├── content.js         # Submission detection & toolbar button
+│   └── content.css        # Modal & button styling (Tokyo Night)
 ├── popup/
-│   ├── popup.html       # Extension popup UI
-│   ├── popup.js         # Calendar and problem management
-│   └── popup.css        # Popup styling
-└── icons/
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
+│   ├── popup.html         # Extension popup UI
+│   ├── popup.js           # Calendar and problem management
+│   └── popup.css          # Popup styling (Tokyo Night theme)
+├── icons/
+│   ├── icon16.png
+│   ├── icon48.png
+│   └── icon128.png
+└── screenshots/           # README screenshots
 ```
 
 ### Building
 No build step required - the extension runs directly from source.
 
-## Contributing
+### Tech Stack
+- Vanilla JavaScript (no frameworks)
+- CSS3 with CSS Variables for theming
+- Chrome Extensions Manifest V3
+- JetBrains Mono font
+- Material Symbols icons
+
+## 🤝 Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
-## License
+## 📄 License
 
 MIT License - feel free to use and modify as needed.
+
+---
+
+<p align="center">
+  Made with 💜 for the LeetCode community
+</p>

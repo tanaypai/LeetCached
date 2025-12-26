@@ -20,6 +20,73 @@ class LeetCodeSubmissionDetector {
   init() {
     // Watch for submission results
     this.observeSubmissionResults();
+    
+    // Inject toolbar button
+    this.injectToolbarButton();
+  }
+
+  injectToolbarButton() {
+    // Wait for the toolbar to be available
+    const waitForToolbar = () => {
+      const toolbar = document.querySelector('#ide-top-btns');
+      if (toolbar) {
+        this.addToolbarButton(toolbar);
+      } else {
+        // Retry after a short delay
+        setTimeout(waitForToolbar, 500);
+      }
+    };
+    
+    // Start checking for toolbar
+    waitForToolbar();
+    
+    // Also observe for SPA navigation (LeetCode is a SPA)
+    const observer = new MutationObserver(() => {
+      const toolbar = document.querySelector('#ide-top-btns');
+      if (toolbar && !document.querySelector('.leetcached-toolbar-btn')) {
+        this.addToolbarButton(toolbar);
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  addToolbarButton(toolbar) {
+    // Don't add if already exists
+    if (document.querySelector('.leetcached-toolbar-btn')) return;
+    
+    // Create the button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'leetcached-toolbar-btn';
+    buttonContainer.innerHTML = `
+      <div class="relative flex overflow-hidden rounded bg-fill-tertiary dark:bg-fill-tertiary ml-1.5">
+        <div class="group flex flex-none items-center justify-center hover:bg-fill-quaternary dark:hover:bg-fill-quaternary rounded">
+          <button class="leetcached-add-btn py-1.5 font-medium items-center whitespace-nowrap focus:outline-none inline-flex relative select-none rounded-none px-3 bg-transparent dark:bg-transparent" style="color: var(--tn-purple, #bb9af7);">
+            <img src="${this.extensionIconUrl}" alt="LeetCached" style="width: 16px; height: 16px; margin-right: 8px;">
+            <span class="text-sm font-medium">Add to LeetCached</span>
+          </button>
+        </div>
+      </div>
+    `;
+    
+    // Add click handler
+    const button = buttonContainer.querySelector('.leetcached-add-btn');
+    button.addEventListener('click', () => {
+      const problemInfo = this.getProblemInfo();
+      this.showAddToScheduleModal(problemInfo);
+    });
+    
+    // Insert after the Notes/Leet buttons area (div with data-cid="2")
+    const notesLeetArea = toolbar.querySelector('[data-cid="2"]');
+    if (notesLeetArea) {
+      notesLeetArea.after(buttonContainer);
+    } else {
+      // Fallback: append to toolbar
+      toolbar.appendChild(buttonContainer);
+    }
   }
 
   observeSubmissionResults() {

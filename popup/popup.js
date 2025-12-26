@@ -79,48 +79,48 @@ class LeetCachedPopup {
     this.setupSortableHeaders();
     
     // Edit Modal
-    document.querySelector('.modal-close').addEventListener('click', () => {
+    document.querySelector('.modal-close')?.addEventListener('click', () => {
       this.closeEditModal();
     });
     
-    document.getElementById('edit-modal').addEventListener('click', (e) => {
+    document.getElementById('edit-modal')?.addEventListener('click', (e) => {
       if (e.target.id === 'edit-modal') this.closeEditModal();
     });
     
-    document.getElementById('add-date-btn').addEventListener('click', () => {
+    document.getElementById('add-date-btn')?.addEventListener('click', () => {
       this.addDateToEdit();
     });
     
-    document.getElementById('save-changes-btn').addEventListener('click', () => {
+    document.getElementById('save-changes-btn')?.addEventListener('click', () => {
       this.saveEditChanges();
     });
     
-    document.getElementById('delete-problem-btn').addEventListener('click', () => {
+    document.getElementById('delete-problem-btn')?.addEventListener('click', () => {
       this.deleteEditingProblem();
     });
     
-    // Add Problem Modal
-    document.getElementById('add-problem-btn').addEventListener('click', () => {
+    // Add Problem Modal (only if button exists)
+    document.getElementById('add-problem-btn')?.addEventListener('click', () => {
       this.openAddProblemModal();
     });
     
-    document.querySelector('.add-modal-close').addEventListener('click', () => {
+    document.querySelector('.add-modal-close')?.addEventListener('click', () => {
       this.closeAddProblemModal();
     });
     
-    document.getElementById('add-problem-modal').addEventListener('click', (e) => {
+    document.getElementById('add-problem-modal')?.addEventListener('click', (e) => {
       if (e.target.id === 'add-problem-modal') this.closeAddProblemModal();
     });
     
-    document.getElementById('cancel-add-btn').addEventListener('click', () => {
+    document.getElementById('cancel-add-btn')?.addEventListener('click', () => {
       this.closeAddProblemModal();
     });
     
-    document.getElementById('confirm-add-btn').addEventListener('click', () => {
+    document.getElementById('confirm-add-btn')?.addEventListener('click', () => {
       this.addNewProblem();
     });
     
-    document.getElementById('add-problem-add-date-btn').addEventListener('click', () => {
+    document.getElementById('add-problem-add-date-btn')?.addEventListener('click', () => {
       this.addDateToNewProblem();
     });
     
@@ -929,13 +929,20 @@ class LeetCachedPopup {
   // ========================================
   
   updateStats() {
-    const today = this.formatDate(new Date());
-    const todayProblems = this.getProblemsForDate(today);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = this.formatDate(today);
+    const todayProblems = this.getProblemsForDate(todayStr);
     
-    // Calculate upcoming (next 7 days)
+    // Calculate "This Week" - from tomorrow until Sunday (end of week)
+    // Sunday = 0, so we need to find days until next Sunday
     let upcomingCount = 0;
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek; // Days remaining in week (not counting today)
+    
+    // Count problems from tomorrow through Sunday
+    for (let i = 1; i <= daysUntilSunday; i++) {
+      const date = new Date(today);
       date.setDate(date.getDate() + i);
       const dateStr = this.formatDate(date);
       upcomingCount += this.getProblemsForDate(dateStr).filter(p => !p.isCompleted).length;

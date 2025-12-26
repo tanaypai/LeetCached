@@ -665,3 +665,42 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+/* ========================================
+   Toolbar Button Styles
+   ======================================== */
+
+.leetcached-toolbar-btn {
+  display: flex;
+  align-items: center;
+}
+
+.leetcached-add-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+  height: 32px !important;
+  padding: 0 10px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  background: var(--fill-tertiary, rgba(255, 255, 255, 0.05)) !important;
+  border: none !important;
+}
+
+.leetcached-add-btn:hover {
+  background: var(--fill-quaternary, rgba(255, 255, 255, 0.1)) !important;
+  transform: translateY(-1px);
+}
+
+.leetcached-add-btn img {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.leetcached-add-btn span {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
