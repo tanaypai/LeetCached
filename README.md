@@ -11,30 +11,8 @@ A Chrome extension that helps you retain LeetCode solutions through spaced repet
 - **➕ Toolbar Button**: "Add to LeetCached" button in LeetCode's toolbar lets you add any problem anytime
 - **📅 Spaced Repetition Scheduling**: Automatically schedules review dates using proven intervals (1, 3, 7, 14, 30 days)
 - **🗓️ Calendar View**: Visual calendar showing upcoming problems to review with inline problem sidebar
-- ** Problem Management**: Edit, reschedule, or remove problems from your review list
+- **📋 Problem Management**: Edit, reschedule, or remove problems from your review list
 - **⚙️ Custom Intervals**: Choose from preset schedules (Standard, Intensive, Relaxed) or set custom intervals
-
-## 📸 Screenshots
-
-### Calendar View
-![Calendar View](screenshots/calendar-view.png)
-*Visual calendar with scheduled problems and sidebar showing daily reviews*
-
-### Manage View
-![Manage View](screenshots/manage-view.png)
-*Search, sort, and manage all your tracked problems*
-
-### Add to LeetCached Button
-![Toolbar Button](screenshots/toolbar-button.png)
-*One-click button in LeetCode's toolbar to add any problem*
-
-### Add Problem Modal
-![Add Modal](screenshots/add-modal.png)
-*Choose your spaced repetition schedule when adding problems*
-
-### Help & Support
-![Help View](screenshots/help-view.png)
-*Built-in help center with getting started guide and FAQs*
 
 ## 🚀 Installation
 
@@ -55,6 +33,33 @@ A Chrome extension that helps you retain LeetCode solutions through spaced repet
 3. **Choose Schedule** - Select a preset interval (Standard, Intensive, Relaxed) or configure custom review dates
 4. **Review Problems** - Click the extension icon to see your calendar and upcoming reviews
 5. **Stay on Track** - Check the stats cards to see problems due today and this week
+
+## 📸 Screenshots
+
+### Calendar View
+<img src="screenshots/calendar-view.png" alt="Calendar View" width="400">
+
+*Visual calendar with scheduled problems and sidebar showing daily reviews*
+
+### Manage View
+<img src="screenshots/manage-view.png" alt="Manage View" width="400">
+
+*Search, sort, and manage all your tracked problems*
+
+### Add to LeetCached Button
+<img src="screenshots/toolbar-button.png" alt="Toolbar Button" width="500">
+
+*One-click button in LeetCode's toolbar to add any problem*
+
+### Add Problem Modal
+<img src="screenshots/add-modal.png" alt="Add Modal" width="300">
+
+*Choose your spaced repetition schedule when adding problems*
+
+### Help & Support
+<img src="screenshots/help-view.png" alt="Help View" width="400">
+
+*Built-in help center with getting started guide and FAQs*
 
 ## 🎨 Tokyo Night Theme
 
