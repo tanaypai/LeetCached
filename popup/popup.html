@@ -16,7 +16,7 @@
         <div class="logo-container">
           <img src="../icons/icon48.png" alt="LeetCached" class="logo-img">
         </div>
-        <h1 class="brand-title">LeetCached</h1>
+        <h1 class="brand-title">Leet<span class="brand-title-cached">Cached</span></h1>
       </div>
     </header>
 
@@ -321,114 +321,103 @@
     <!-- Settings View -->
     <div id="settings-view" class="view">
       <div class="settings-layout">
-        <div class="settings-header">
-        </div>
-        <div class="settings-content">
-          <div class="settings-section">
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-label">Auto-detect accepted submissions</div>
-                <div class="setting-desc">When enabled, problems you submit as "Accepted" on LeetCode will be automatically added to LeetCached. If disabled, use the "Add to LeetCached" button to add problems manually.</div>
+        <main class="settings-content-wrapper">
+          <!-- General Preferences -->
+          <section class="settings-section-container">
+              <h2 class="section-heading">
+                  <span class="material-symbols-outlined text-accent-purple" style="font-size: 16px;">tune</span>
+                  General Preferences
+              </h2>
+              <div class="settings-card hover-border">
+                  <div class="settings-row">
+                      <div class="settings-info">
+                          <h3 class="settings-title">Auto-Detect Submissions</h3>
+                          <p class="settings-desc">When enabled, automatically prompts you to schedule accepted submissions. When disabled, use the "Add to LeetCached" button manually.</p>
+                      </div>
+                      <div class="settings-control">
+                          <label class="switch">
+                              <input type="checkbox" id="auto-detect-toggle" />
+                              <span class="slider"></span>
+                          </label>
+                      </div>
+                  </div>
               </div>
-              <div class="setting-control">
-                <label class="switch">
-                  <input type="checkbox" id="auto-detect-toggle" />
-                  <span class="slider"></span>
-                </label>
+          </section>
+
+          <!-- Review Interval Presets -->
+          <section class="settings-section-container">
+              <div class="section-header">
+                  <h2 class="section-heading">
+                      <span class="material-symbols-outlined text-accent-green" style="font-size: 16px;">timer</span>
+                      Review Interval Presets
+                  </h2>
               </div>
+              
+              <div id="presets-grid" class="presets-grid">
+                  <!-- Presets will be injected here via JS -->
+              </div>
+          </section>
+        </main>
+        
+        <!-- Footer/Reset -->
+        <section class="settings-footer">
+            <div class="footer-content">
+                <div id="app-version" class="version-info"></div>
+                <button id="reset-data-btn" class="btn-danger-outline">
+                    Reset Settings
+                </button>
             </div>
-          </div>
-          <div class="settings-empty" id="settings-empty-placeholder" style="display:none;">
-            <span class="material-symbols-outlined settings-empty-icon">settings</span>
-            <h3>More settings coming soon</h3>
-            <p>Additional configuration options will be available in a future update.</p>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Edit Schedule</h3>
-          <button class="close-btn modal-close">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="edit-problem-title" id="edit-problem-title"></div>
-          
-          <div class="timeline-section">
-            <div class="timeline-header">
-              <span class="timeline-title">Scheduled Reviews</span>
+    <!-- Edit Preset Modal -->
+    <div id="preset-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-header-new">
+                <h3 class="modal-title-new">
+                    <span class="material-symbols-outlined text-primary">edit</span>
+                    <span id="preset-modal-title">Edit Standard Preset</span>
+                </h3>
+                <button class="close-btn-new modal-close-preset">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
-            <div id="edit-dates-list" class="timeline-list"></div>
-            <button class="btn-add-repetition" id="add-date-btn">
-              <span class="material-symbols-outlined">add</span>
-              Add Repetition
-            </button>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-danger" id="delete-problem-btn">
-            <span class="material-symbols-outlined">delete</span>
-            Delete
-          </button>
-          <button class="btn btn-primary" id="save-changes-btn">
-            <span class="material-symbols-outlined">save</span>
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+            
+            <div class="modal-body-new custom-scrollbar">
+                <div class="form-section">
+                    <div class="input-group">
+                        <label class="input-label">Preset Name</label>
+                        <input type="text" id="preset-name-input" class="text-input-new" placeholder="e.g., Intensive" />
+                    </div>
+                </div>
 
-    <!-- Add Problem Modal -->
-    <div id="add-problem-modal" class="modal">
-      <div class="modal-content modal-large">
-        <div class="modal-header">
-          <h3>Add Problem</h3>
-          <button class="close-btn add-modal-close">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Problem Title *</label>
-            <input type="text" id="new-problem-title" class="form-input" placeholder="e.g., Two Sum">
-          </div>
-          <div class="form-group">
-            <label>LeetCode URL *</label>
-            <input type="text" id="new-problem-url" class="form-input" placeholder="https://leetcode.com/problems/two-sum">
-          </div>
-          <div class="form-group">
-            <label>Difficulty</label>
-            <select id="new-problem-difficulty" class="form-select">
-              <option value="Easy">Easy</option>
-              <option value="Medium" selected>Medium</option>
-              <option value="Hard">Hard</option>
-            </select>
-          </div>
-          
-          <div class="timeline-section">
-            <div class="timeline-header">
-              <span class="timeline-title">Review Schedule</span>
+                <div class="form-section">
+                    <div class="section-utility">
+                        <label class="input-label">Interval Stages</label>
+                        <span class="badge-utility">In Days</span>
+                    </div>
+                    
+                    <div id="preset-stages-list" class="stages-list">
+                        <!-- Stages injected here -->
+                    </div>
+
+                    <button id="add-stage-btn" class="btn-dashed-new">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Add Next Stage
+                    </button>
+                </div>
             </div>
-            <div id="add-problem-dates-list" class="timeline-list"></div>
-            <button class="btn-add-repetition" id="add-problem-add-date-btn">
-              <span class="material-symbols-outlined">add</span>
-              Add Repetition
-            </button>
-          </div>
+
+            <div class="modal-footer-new">
+                <button id="delete-preset-btn" class="btn-text-new" style="color: var(--tn-red); margin-right: auto;">Delete</button>
+                <button id="save-preset-btn" class="btn-primary-new">
+                    <span class="material-symbols-outlined">save</span>
+                    Save Preset
+                </button>
+            </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" id="cancel-add-btn">Cancel</button>
-          <button class="btn btn-primary" id="confirm-add-btn">
-            <span class="material-symbols-outlined">add</span>
-            Add Problem
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 

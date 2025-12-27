@@ -4,15 +4,15 @@
 class LeetCodeSubmissionDetector {
   constructor() {
     this.extensionIconUrl = chrome.runtime.getURL('icons/icon48.png');
-    this.schedulePresets = {
-      standard: [1, 3, 7, 14, 30],
-      intensive: [1, 2, 4, 7, 14],
-      relaxed: [2, 7, 14, 30, 60],
-      custom: []
-    };
-    this.currentPreset = 'standard';
+    // Default presets structure (will be overwritten by storage)
+    this.schedulePresets = [
+       { id: 'standard', name: 'Standard', intervals: [1, 3, 7] },
+       { id: 'intensive', name: 'Intensive', intervals: [1, 2, 4] },
+       { id: 'relaxed', name: 'Relaxed', intervals: [2, 7, 14] }
+    ];
+    this.currentPresetId = 'standard';
     this.isEditMode = false;
-    this.customIntervals = [1, 3, 7, 14, 30];
+    this.customIntervals = [1, 3, 7];
     this.modal = null;
     this.init();
   }
@@ -21,11 +21,22 @@ class LeetCodeSubmissionDetector {
     // Inject toolbar button
     this.injectToolbarButton();
     
-    // Initialize state
-    this.submissionState = 'IDLE'; // IDLE, SUBMITTING, RUNNING, FINISHED
-    
-    // Setup submit button listener
+    // Setup submit button listener for auto-detection
     this.setupSubmitListener();
+    
+    // Initialize state
+    this.submissionState = 'IDLE'; 
+    
+    // Load presets from storage
+    chrome.storage.local.get(['schedulePresets']).then(result => {
+        if (result.schedulePresets && Array.isArray(result.schedulePresets) && result.schedulePresets.length > 0) {
+            this.schedulePresets = result.schedulePresets;
+             // Ensure current default exists, else pick first
+            if (!this.schedulePresets.find(p => p.id === this.currentPresetId)) {
+                this.currentPresetId = this.schedulePresets[0]?.id || 'custom';
+            }
+        }
+    });
   }
 
   setupSubmitListener() {
@@ -419,7 +430,49 @@ class LeetCodeSubmissionDetector {
 
   getModalHTML(problemInfo) {
     const difficultyClass = problemInfo.difficulty.toLowerCase();
-    const previewDates = this.getPreviewDates(this.schedulePresets[this.currentPreset]);
+    
+    // Find current preset object
+    const currentPreset = this.schedulePresets.find(p => p.id === this.currentPresetId) || this.schedulePresets[0];
+    const previewDates = this.getPreviewDates(currentPreset ? currentPreset.intervals : []);
+    
+    // Generate Schedule Options HTML
+    const scheduleOptionsHtml = this.schedulePresets.map(preset => {
+        const isChecked = preset.id === this.currentPresetId ? 'checked' : '';
+        // Format intervals string e.g. "1, 3, 7 days"
+        const intervalText = preset.intervals.join(', ') + ' days';
+        
+        return `
+            <label class="lsr-schedule-option">
+              <input type="radio" name="schedule" value="${preset.id}" ${isChecked}>
+              <div class="lsr-schedule-card">
+                <div class="lsr-schedule-card-header">
+                  <span class="lsr-schedule-card-title">${preset.name}</span>
+                  <div class="lsr-radio-indicator"></div>
+                </div>
+                <span class="lsr-schedule-card-desc">${intervalText}</span>
+              </div>
+            </label>
+        `;
+    }).join('');
+    
+    // Add "Custom" option explicitly if we want it always available, 
+    // or assume it's part of presets if the user added it. 
+    // The previous code had a specific "Custom" block. 
+    // Let's explicitly add the Legacy Custom option for now at the end
+    const customChecked = this.currentPresetId === 'custom' ? 'checked' : '';
+    const customOptionHtml = `
+        <label class="lsr-schedule-option">
+          <input type="radio" name="schedule" value="custom" ${customChecked}>
+          <div class="lsr-schedule-card">
+            <div class="lsr-schedule-card-header">
+              <span class="lsr-schedule-card-title">Custom</span>
+              <div class="lsr-radio-indicator"></div>
+            </div>
+            <span class="lsr-schedule-card-desc">Set your own intervals</span>
+          </div>
+        </label>
+    `;
+
     const topicsHtml = problemInfo.topics && problemInfo.topics.length > 0
       ? problemInfo.topics.map(topic => `<span class="lsr-topic-tag">${topic}</span>`).join('')
       : `<span class="lsr-topic-tag">${problemInfo.category}</span>`;
@@ -447,46 +500,8 @@ class LeetCodeSubmissionDetector {
           <!-- Schedule Options -->
           <span class="lsr-section-label">Schedule Preset</span>
           <div class="lsr-schedule-grid">
-            <label class="lsr-schedule-option">
-              <input type="radio" name="schedule" value="standard" ${this.currentPreset === 'standard' ? 'checked' : ''}>
-              <div class="lsr-schedule-card">
-                <div class="lsr-schedule-card-header">
-                  <span class="lsr-schedule-card-title">Standard</span>
-                  <div class="lsr-radio-indicator"></div>
-                </div>
-                <span class="lsr-schedule-card-desc">1, 3, 7, 14, 30 days</span>
-              </div>
-            </label>
-            <label class="lsr-schedule-option">
-              <input type="radio" name="schedule" value="intensive" ${this.currentPreset === 'intensive' ? 'checked' : ''}>
-              <div class="lsr-schedule-card">
-                <div class="lsr-schedule-card-header">
-                  <span class="lsr-schedule-card-title">Intensive</span>
-                  <div class="lsr-radio-indicator"></div>
-                </div>
-                <span class="lsr-schedule-card-desc">1, 2, 4, 7, 14 days</span>
-              </div>
-            </label>
-            <label class="lsr-schedule-option">
-              <input type="radio" name="schedule" value="relaxed" ${this.currentPreset === 'relaxed' ? 'checked' : ''}>
-              <div class="lsr-schedule-card">
-                <div class="lsr-schedule-card-header">
-                  <span class="lsr-schedule-card-title">Relaxed</span>
-                  <div class="lsr-radio-indicator"></div>
-                </div>
-                <span class="lsr-schedule-card-desc">2, 7, 14, 30, 60 days</span>
-              </div>
-            </label>
-            <label class="lsr-schedule-option">
-              <input type="radio" name="schedule" value="custom" ${this.currentPreset === 'custom' ? 'checked' : ''}>
-              <div class="lsr-schedule-card">
-                <div class="lsr-schedule-card-header">
-                  <span class="lsr-schedule-card-title">Custom</span>
-                  <div class="lsr-radio-indicator"></div>
-                </div>
-                <span class="lsr-schedule-card-desc">Set your own intervals</span>
-              </div>
-            </label>
+            ${scheduleOptionsHtml}
+            ${customOptionHtml}
           </div>
 
           <!-- Preview / Edit Section -->
@@ -526,9 +541,13 @@ class LeetCodeSubmissionDetector {
   }
 
   getEditTimelineHTML() {
-    const intervals = this.currentPreset === 'custom' 
-      ? this.customIntervals 
-      : this.schedulePresets[this.currentPreset];
+    let intervals;
+    if (this.currentPresetId === 'custom') {
+        intervals = this.customIntervals;
+    } else {
+        const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+        intervals = preset ? preset.intervals : [];
+    }
 
     return `
       <div class="lsr-timeline-edit">
@@ -604,7 +623,7 @@ class LeetCodeSubmissionDetector {
     // Schedule radio buttons
     this.modal.querySelectorAll('input[name="schedule"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
-        this.currentPreset = e.target.value;
+        this.currentPresetId = e.target.value;
         this.updatePreview();
       });
     });
@@ -678,15 +697,17 @@ class LeetCodeSubmissionDetector {
   }
 
   addInterval() {
-    if (this.currentPreset === 'custom') {
+    if (this.currentPresetId === 'custom') {
       const lastInterval = this.customIntervals[this.customIntervals.length - 1] || 30;
       this.customIntervals.push(lastInterval + 14);
     } else {
       // Switch to custom mode
-      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
+      const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+      this.customIntervals = preset ? [...preset.intervals] : [1, 3, 7]; // fallback
+      
       const lastInterval = this.customIntervals[this.customIntervals.length - 1] || 30;
       this.customIntervals.push(lastInterval + 14);
-      this.currentPreset = 'custom';
+      this.currentPresetId = 'custom';
       
       // Update radio button
       const customRadio = this.modal?.querySelector('input[value="custom"]');
@@ -696,9 +717,10 @@ class LeetCodeSubmissionDetector {
   }
 
   removeInterval(index) {
-    if (this.currentPreset !== 'custom') {
-      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
-      this.currentPreset = 'custom';
+    if (this.currentPresetId !== 'custom') {
+      const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+      this.customIntervals = preset ? [...preset.intervals] : [1, 3, 7];
+      this.currentPresetId = 'custom';
       const customRadio = this.modal?.querySelector('input[value="custom"]');
       if (customRadio) customRadio.checked = true;
     }
@@ -708,9 +730,10 @@ class LeetCodeSubmissionDetector {
   }
 
   updateIntervalDays(index, days) {
-    if (this.currentPreset !== 'custom') {
-      this.customIntervals = [...this.schedulePresets[this.currentPreset]];
-      this.currentPreset = 'custom';
+    if (this.currentPresetId !== 'custom') {
+      const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+      this.customIntervals = preset ? [...preset.intervals] : [1, 3, 7];
+      this.currentPresetId = 'custom';
       const customRadio = this.modal?.querySelector('input[value="custom"]');
       if (customRadio) customRadio.checked = true;
     }
@@ -741,9 +764,14 @@ class LeetCodeSubmissionDetector {
     const addBtn = this.modal.querySelector('[data-action="add"]');
 
     if (container) {
-      const intervals = this.currentPreset === 'custom' 
-        ? this.customIntervals 
-        : this.schedulePresets[this.currentPreset];
+      let intervals;
+      if (this.currentPresetId === 'custom') {
+          intervals = this.customIntervals;
+      } else {
+          const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+          intervals = preset ? preset.intervals : [];
+      }
+    
       const previewDates = this.getPreviewDates(intervals);
       
       container.innerHTML = this.isEditMode 
@@ -765,9 +793,13 @@ class LeetCodeSubmissionDetector {
   }
 
   async addProblemToSchedule(problemInfo) {
-    const intervals = this.currentPreset === 'custom' 
-      ? this.customIntervals 
-      : this.schedulePresets[this.currentPreset];
+    let intervals;
+    if (this.currentPresetId === 'custom') {
+        intervals = this.customIntervals;
+    } else {
+        const preset = this.schedulePresets.find(p => p.id === this.currentPresetId);
+        intervals = preset ? preset.intervals : [];
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -777,6 +809,13 @@ class LeetCodeSubmissionDetector {
       date.setDate(date.getDate() + days);
       return date.toISOString().split('T')[0];
     });
+    
+    // ... rest of method logic ...
+    // Since I can't easily preserve the rest without reading it all, I will just replace the beginning lines if possible. 
+    // Wait, replace_file_content requires exact TargetContent match.
+    // I know the rest of the method from previous view, but let's be safe. 
+    // I will read the full method first to ensure I have the exact content for replacement.
+
 
     // Use slug as the problem ID (matches popup format)
     const problemId = problemInfo.slug;
@@ -807,6 +846,14 @@ class LeetCodeSubmissionDetector {
       this.showSuccessFeedback();
     } catch (error) {
       console.error('Failed to save problem:', error);
+      
+      // Handle extension context invalidated error
+      if (error.message && error.message.includes('Extension context invalidated')) {
+        alert('LeetCached was updated. Please refresh the page to continue.');
+        this.closeModal();
+      } else {
+        alert('Failed to save problem. Please try again.');
+      }
     }
   }
 

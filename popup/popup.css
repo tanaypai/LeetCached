@@ -40,6 +40,10 @@ body {
   overflow: hidden;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* ========================================
    Header
    ======================================== */
@@ -85,6 +89,10 @@ body {
   font-weight: 700;
   color: var(--tn-text);
   letter-spacing: -0.5px;
+}
+
+.brand-title-cached {
+  color: #efab4e;
 }
 
 /* ========================================
@@ -2214,5 +2222,594 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+
+/* ========================================
+   New Settings UI (Mockup Ports)
+   ======================================== */
+
+/* Main Layout Fixes - Replacing missing Tailwind classes */
+#settings-view {
+  padding: 10px 10px 0 10px; /* Remove bottom padding */
+}
+
+.settings-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 0;
+  padding-bottom: 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* Custom Scrollbar */
+.settings-content-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.settings-content-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-content-wrapper::-webkit-scrollbar-thumb {
+  background: var(--tn-border);
+  border-radius: 3px;
+}
+
+.settings-section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-section-container:last-of-type {
+  flex: 1;
+}
+
+/* Section Headings */
+.section-heading {
+  font-size: 11px; /* Smaller */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tn-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding-left: 2px; /* Slight adjustment */
+}
+
+.section-heading .material-symbols-outlined {
+  width: 18px; /* Fixed width for alignment */
+  text-align: center;
+}
+
+.text-accent-purple { color: var(--tn-secondary); }
+.text-accent-green { color: var(--tn-green); }
+
+/* Settings Card (General Prefs) */
+.settings-card {
+  background: var(--tn-surface);
+  border: 1px solid var(--tn-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: border-color 0.2s;
+}
+
+.hover-border:hover {
+  border-color: rgba(122, 162, 247, 0.3);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 12px;
+}
+
+.settings-title {
+  font-size: 13px; /* Smaller */
+  font-weight: 700;
+  color: white;
+}
+
+.settings-desc {
+  font-size: 10px; /* Smaller */
+  color: var(--tn-text-dim);
+  line-height: 1.4;
+}
+
+/* Presets Grid */
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  grid-auto-rows: 120px;
+}
+
+/* Preset Card Styles */
+.preset-card {
+  background: var(--tn-surface);
+  border: 1px solid var(--tn-border);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.preset-card:hover {
+  border-color: var(--tn-primary);
+  background: var(--tn-surface-hover);
+}
+
+.preset-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.active-badge {
+  background: rgba(122, 162, 247, 0.15);
+  color: var(--tn-primary);
+  font-size: 8px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preset-desc {
+  font-size: 11px;
+  color: var(--tn-text-dim);
+  line-height: 1.3;
+}
+
+.preset-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.stage-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--tn-bg);
+  border: 1px solid var(--tn-border);
+  color: var(--tn-text-muted);
+}
+
+.preset-card:hover .stage-tag {
+  border-color: rgba(122, 162, 247, 0.3);
+  color: var(--tn-text);
+}
+
+.card-footer {
+  display: none;
+}
+
+.edit-action-btn {
+  display: none;
+}
+
+/* Custom Preset Add Card */
+.custom-preset-card {
+  background: transparent;
+  border: 2px dashed var(--tn-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.custom-preset-card:hover {
+  border-color: var(--tn-primary);
+  background: rgba(122, 162, 247, 0.05);
+}
+
+.add-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--tn-surface);
+  border: 1px solid var(--tn-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.custom-preset-card:hover .add-icon-circle {
+  border-color: var(--tn-primary);
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.add-icon-circle .material-symbols-outlined {
+  color: var(--tn-text-dim);
+  font-size: 22px;
+  transition: color 0.2s;
+}
+
+.custom-preset-card:hover .add-icon-circle .material-symbols-outlined {
+  color: var(--tn-primary);
+}
+
+/* Footer / Version - Thin Strip */
+.settings-footer {
+  margin-top: auto;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.version-info {
+  font-size: 9px;
+  color: var(--tn-text-dim);
+  font-family: inherit;
+}
+
+.version-info a {
+  color: inherit;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.version-info a:hover {
+  color: var(--tn-primary);
+}
+
+.btn-danger-outline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tn-text-dim);
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger-outline:hover {
+  color: var(--tn-red);
+  background: rgba(247, 118, 142, 0.1);
+}
+
+/* ========================================
+   New Modal Styles (Kept largely the same but verified)
+   ======================================== */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+
+.modal-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 360px;
+  max-height: 80vh;
+  background: var(--tn-surface);
+  border: 1px solid var(--tn-border);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 101;
+  overflow: hidden;
+}
+
+.modal-header-new {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--tn-bg-dark);
+  border-bottom: 1px solid rgba(65, 72, 104, 0.5);
+}
+
+.modal-title-new {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tn-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.close-btn-new {
+  color: var(--tn-text-dim);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  transition: all 0.2s;
+}
+
+.close-btn-new:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-body-new {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Custom Scrollbar for modal body */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--tn-border);
+  border-radius: 3px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tn-text-dim);
+}
+
+.text-input-new {
+  width: 100%;
+  background: var(--tn-bg);
+  border: 1px solid var(--tn-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--tn-text);
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.text-input-new:focus {
+  border-color: var(--tn-primary);
+  box-shadow: 0 0 0 1px var(--tn-primary);
+}
+
+.section-utility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge-utility {
+  font-size: 9px;
+  color: var(--tn-text-dim);
+  background: var(--tn-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(65, 72, 104, 0.5);
+}
+
+.stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-index {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--tn-text-dim);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.stage-input {
+  width: 100%;
+  background: var(--tn-bg);
+  border: 1px solid var(--tn-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  padding-right: 28px;
+  font-size: 13px;
+  color: var(--tn-text);
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.stage-input:focus {
+  border-color: var(--tn-primary);
+}
+
+/* Hide number input spinners */
+.stage-input::-webkit-outer-spin-button,
+.stage-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stage-input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.unit-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tn-text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+}
+
+.delete-stage-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--tn-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-stage-btn:hover {
+  background: rgba(247, 118, 142, 0.1);
+  color: var(--tn-red);
+}
+
+.btn-dashed-new {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--tn-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tn-text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-dashed-new:hover {
+  border-color: var(--tn-primary);
+  color: var(--tn-primary);
+  background: rgba(122, 162, 247, 0.05);
+}
+
+.modal-footer-new {
+  background: var(--tn-bg-dark);
+  border-top: 1px solid rgba(65, 72, 104, 0.5);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.btn-text-new {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--tn-text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-text-new:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary-new {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: var(--tn-primary);
+  border: none;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 6px -1px rgba(122, 162, 247, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-primary-new:hover {
+  background: var(--tn-primary-hover);
+  transform: translateY(-1px);
 }
 

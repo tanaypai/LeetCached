@@ -29,6 +29,12 @@ class LeetCachedPopup {
     this.setupEventListeners();
     // Show today's problems in sidebar by default
     this.showSidebarProblems(this.formatDate(new Date()));
+    // Load and display version from manifest
+    const manifest = chrome.runtime.getManifest();
+    const versionEl = document.getElementById('app-version');
+    if (versionEl && manifest.version) {
+      versionEl.textContent = `v${manifest.version}`;
+    }
   }
   
   async loadProblems() {
@@ -143,6 +149,40 @@ class LeetCachedPopup {
         this.saveSetting('autoDetect', enabled);
       });
     }
+
+    // New Preset Modal Listeners
+    document.querySelectorAll('.modal-close-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.getElementById('preset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('active');
+        });
+    });
+
+    document.getElementById('preset-modal')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const modal = document.getElementById('preset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('active');
+        }
+    });
+
+    document.getElementById('add-stage-btn')?.addEventListener('click', () => {
+        this.addPresetStage();
+    });
+
+    document.getElementById('save-preset-btn')?.addEventListener('click', () => {
+        this.savePreset();
+    });
+
+    document.getElementById('delete-preset-btn')?.addEventListener('click', () => {
+        this.deletePresetFromModal();
+    });
+
+    // Reset Data Button
+    document.getElementById('reset-data-btn')?.addEventListener('click', () => {
+        this.resetSettings();
+    });
   }
   
   switchHelpSection(section) {
@@ -176,10 +216,33 @@ class LeetCachedPopup {
 
   async loadSettings() {
     try {
-      const result = await chrome.storage.local.get({ autoDetect: true });
+      const defaultPresets = [
+        { id: 'standard', name: 'Standard', intervals: [1, 3, 7] },
+        { id: 'intensive', name: 'Intensive', intervals: [1, 2, 4] },
+        { id: 'relaxed', name: 'Relaxed', intervals: [2, 7, 14] }
+      ];
+
+      const result = await chrome.storage.local.get({ 
+        autoDetect: true,
+        schedulePresets: defaultPresets
+      });
+      
       this.autoDetect = result.autoDetect;
+      this.schedulePresets = result.schedulePresets;
+
       const autoToggle = document.getElementById('auto-detect-toggle');
       if (autoToggle) autoToggle.checked = !!this.autoDetect;
+
+      // Render Presets
+      this.renderPresets();
+      
+      // Add Preset Button Listener (only if not already attached)
+      const addPresetBtn = document.getElementById('add-preset-btn');
+      if (addPresetBtn && !addPresetBtn.dataset.listenerAttached) {
+          addPresetBtn.addEventListener('click', () => this.addPreset());
+          addPresetBtn.dataset.listenerAttached = 'true';
+      }
+
     } catch (err) {
       console.error('Failed to load settings', err);
     }
@@ -199,7 +262,244 @@ class LeetCachedPopup {
       console.error('Failed to save setting', key, err);
     }
   }
+
+  async savePresets() {
+      await chrome.storage.local.set({ schedulePresets: this.schedulePresets });
+      // Re-render to ensure UI reflects state (though inputs are bound)
+      // We avoid full re-render to keep input focus if possible, but for now simple re-render is safer
+      // this.renderPresets(); 
+  }
+
+  renderPresets() {
+      const container = document.getElementById('presets-grid');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      this.schedulePresets.forEach((preset, index) => {
+          const card = document.createElement('div');
+          card.className = 'preset-card';
+          
+          card.innerHTML = `
+             <div class="preset-content-wrapper">
+                  <div class="card-header-row">
+                      <h3 class="preset-card-title">${preset.name}</h3>
+                      ${index <= 2 ? '<span class="active-badge">Default</span>' : ''} 
+                  </div>
+                  <div class="preset-desc">${this.getPresetDescription(preset.name)}</div>
+                  <div class="preset-stages">
+                      ${preset.intervals.map(d => `<span class="stage-tag">${d}d</span>`).join('')}
+                  </div>
+             </div>
+             <div class="card-footer">
+                  <button class="edit-action-btn" type="button">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                      Edit
+                  </button>
+             </div>
+          `;
+          
+          // Card click
+          card.addEventListener('click', () => this.openPresetModal(index));
+          
+          // Explicit button click (redundant but safe)
+          const editBtn = card.querySelector('.edit-action-btn');
+          if (editBtn) {
+              editBtn.addEventListener('click', (e) => {
+                  e.stopPropagation(); // Stop bubbling to card
+                  this.openPresetModal(index);
+              });
+          }
+
+          container.appendChild(card);
+      });
+      
+      // Custom Preset Card (Add Button)
+      const addCard = document.createElement('div');
+      addCard.className = 'preset-card custom-preset-card';
+      addCard.innerHTML = `
+          <div class="add-icon-circle">
+              <span class="material-symbols-outlined">add</span>
+          </div>
+          <div>
+              <h3 class="text-sm font-bold text-white transition-colors" style="font-size:14px;">Custom Preset</h3>
+              <p class="text-[10px] text-text-muted mt-1" style="font-size:10px; color:var(--tn-text-dim);">Create your own review schedule</p>
+          </div>
+      `;
+      addCard.addEventListener('click', () => this.openPresetModal(-1));
+      container.appendChild(addCard);
+  }
+
+  getPresetDescription(name) {
+      const lower = name.toLowerCase();
+      if (lower.includes('standard')) return 'Recommended for most users';
+      if (lower.includes('intensive')) return 'Short term memory focus';
+      if (lower.includes('relaxed')) return 'Long term maintenance';
+      return 'Custom interval schedule';
+  }
+
+  openPresetModal(index) {
+      this.editingPresetIndex = index;
+      const modal = document.getElementById('preset-modal');
+      const titleEl = document.getElementById('preset-modal-title');
+      const nameInput = document.getElementById('preset-name-input');
+      const deleteBtn = document.getElementById('delete-preset-btn');
+      
+      let preset;
+      if (index === -1) {
+          // New Preset
+          preset = { name: '', intervals: [1, 3, 7] };
+          titleEl.textContent = 'New Preset';
+          if(deleteBtn) deleteBtn.style.display = 'none';
+      } else {
+          preset = JSON.parse(JSON.stringify(this.schedulePresets[index])); // Deep copy
+          titleEl.textContent = `Edit ${preset.name}`;
+          if(deleteBtn) deleteBtn.style.display = 'block';
+      }
+      
+      nameInput.value = preset.name;
+      this.editingPresetIntervals = [...preset.intervals];
+      
+      this.renderPresetStages();
+      modal.classList.remove('hidden');
+      modal.classList.add('active');
+  }
+
+  renderPresetStages() {
+      const list = document.getElementById('preset-stages-list');
+      list.innerHTML = '';
+      
+      this.editingPresetIntervals.forEach((days, i) => {
+          const row = document.createElement('div');
+          row.className = 'stage-row';
+          row.innerHTML = `
+              <span class="stage-index">${i + 1}</span>
+              <div class="input-wrapper">
+                  <input type="number" class="stage-input" value="${days}" min="1">
+                  <span class="unit-suffix">d</span>
+              </div>
+              <button class="delete-stage-btn" title="Remove stage">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+              </button>
+          `;
+          
+          const input = row.querySelector('input');
+          input.addEventListener('change', (e) => {
+              const val = parseInt(e.target.value);
+              if (val > 0) {
+                  this.editingPresetIntervals[i] = val;
+              }
+          });
+          
+          const delBtn = row.querySelector('.delete-stage-btn');
+          delBtn.addEventListener('click', () => {
+              this.editingPresetIntervals.splice(i, 1);
+              this.renderPresetStages();
+          });
+          
+          list.appendChild(row);
+      });
+  }
+
+  addPresetStage() {
+      const last = this.editingPresetIntervals[this.editingPresetIntervals.length - 1] || 0;
+      // Default guess: double the last one or +1
+      const next = last ? last * 2 : 1;
+      this.editingPresetIntervals.push(next);
+      this.renderPresetStages();
+  }
+
+  async savePreset() {
+      const nameInput = document.getElementById('preset-name-input');
+      const name = nameInput.value.trim() || 'Custom Preset';
+      
+      const newPreset = {
+          id: this.editingPresetIndex === -1 ? 'custom_' + Date.now() : this.schedulePresets[this.editingPresetIndex].id,
+          name: name,
+          intervals: this.editingPresetIntervals.sort((a,b) => a-b).filter(n => n > 0)
+      };
+      
+      if (newPreset.intervals.length === 0) {
+          alert('Please add at least one interval stage.');
+          return;
+      }
+
+      if (this.editingPresetIndex === -1) {
+          this.schedulePresets.push(newPreset);
+      } else {
+          this.schedulePresets[this.editingPresetIndex] = newPreset;
+      }
+      
+      await this.savePresets();
+      document.getElementById('preset-modal').classList.add('hidden');
+      document.getElementById('preset-modal').classList.remove('active');
+      this.renderPresets();
+  }
+
+  deletePreset(index) {
+      if (confirm('Delete this preset?')) {
+          this.schedulePresets.splice(index, 1);
+          this.savePresets();
+          this.renderPresets();
+      }
+  }
+
+  deletePresetFromModal() {
+      console.log('Delete button clicked, editingPresetIndex:', this.editingPresetIndex);
+      
+      if (this.editingPresetIndex === -1) {
+          console.log('Cannot delete: this is a new preset');
+          return;
+      }
+      
+      if (this.editingPresetIndex < 0 || this.editingPresetIndex >= this.schedulePresets.length) {
+          console.log('Invalid preset index');
+          return;
+      }
+      
+      // Remove the preset
+      this.schedulePresets.splice(this.editingPresetIndex, 1);
+      this.savePresets();
+      
+      // Close modal
+      const modal = document.getElementById('preset-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('active');
+      
+      // Re-render
+      this.renderPresets();
+      console.log('Preset deleted successfully');
+  }
   
+  // ========================================
+  // Reset Methods
+  // ========================================
+
+  async resetSettings() {
+      const defaultPresets = [
+        { id: 'standard', name: 'Standard', intervals: [1, 3, 7] },
+        { id: 'intensive', name: 'Intensive', intervals: [1, 2, 4] },
+        { id: 'relaxed', name: 'Relaxed', intervals: [2, 7, 14] }
+      ];
+
+      try {
+          // Reset to defaults
+          await chrome.storage.local.set({ 
+              autoDetect: true,
+              schedulePresets: defaultPresets
+          });
+          
+          // Reload settings to ensure UI and internal state are perfectly synced
+          await this.loadSettings();
+          
+          alert('Settings have been reset to default.');
+          
+      } catch (err) {
+          console.error('Failed to reset settings', err);
+          alert('Failed to reset settings.');
+      }
+  }
+
   // ========================================
   // Calendar Methods
   // ========================================
