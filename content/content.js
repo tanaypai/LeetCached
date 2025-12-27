@@ -18,11 +18,34 @@ class LeetCodeSubmissionDetector {
   }
 
   init() {
-    // Watch for submission results
-    this.observeSubmissionResults();
-    
     // Inject toolbar button
     this.injectToolbarButton();
+    
+    // Initialize state
+    this.submissionState = 'IDLE'; // IDLE, SUBMITTING, RUNNING, FINISHED
+    
+    // Setup submit button listener
+    this.setupSubmitListener();
+  }
+
+  setupSubmitListener() {
+    // Use event delegation to handle dynamic button rendering
+    document.addEventListener('click', (e) => {
+      const submitBtn = e.target.closest('[data-e2e-locator="console-submit-button"]');
+      if (submitBtn) {
+        this.handleSubmitClick();
+      }
+    });
+  }
+
+  handleSubmitClick() {
+    console.log('[LeetCached] Submit button clicked');
+    // Reset state to SUBMITTING
+    this.submissionState = 'SUBMITTING';
+    console.log('[LeetCached] State: SUBMITTING');
+    
+    this.stopObserving();
+    this.observeSubmissionResults();
   }
 
   injectToolbarButton() {
@@ -90,43 +113,175 @@ class LeetCodeSubmissionDetector {
   }
 
   observeSubmissionResults() {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (this.isAcceptedSubmission(node)) {
-              this.handleAcceptedSubmission();
-            }
-          }
-        }
-      }
+    console.log('[LeetCached] Starting observation...');
+    
+    // Observe body for changes to detect Pending/Judging or Result
+    this.observer = new MutationObserver((mutations) => {
+      this.checkSubmissionState();
     });
 
-    observer.observe(document.body, {
+    this.observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['class', 'src', 'alt']
     });
+    
+    // Auto-stop after 45 seconds to prevent memory leaks if result never appears
+    this.observerTimeout = setTimeout(() => {
+      console.log('[LeetCached] Observation timed out - no result found.');
+      this.stopObserving();
+    }, 45000);
   }
 
-  isAcceptedSubmission(node) {
-    // Check for "Accepted" submission result
-    const acceptedSelectors = [
-      '[data-e2e-locator="submission-result"]',
-      '.text-green-s',
-      '[class*="success"]'
-    ];
+  stopObserving() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.observerTimeout) {
+      clearTimeout(this.observerTimeout);
+      this.observerTimeout = null;
+    }
+  }
 
-    for (const selector of acceptedSelectors) {
-      const elements = node.matches?.(selector) ? [node] : node.querySelectorAll?.(selector) || [];
-      for (const el of elements) {
-        const text = el.textContent?.toLowerCase() || '';
-        if (text.includes('accepted') || text.includes('success')) {
-          return true;
+  checkSubmissionState() {
+    // 1. Check for RUNNING state (Pending/Judging)
+    const isRunning = this.detectRunningState();
+    if (isRunning) {
+        if (this.submissionState !== 'RUNNING') {
+            this.submissionState = 'RUNNING';
+            console.log('[LeetCached] State: RUNNING');
         }
-      }
+        return; // Still running, wait.
+    }
+
+    // 2. Check for FINISHED state (Result)
+    // We only accept a result if we were previously SUBMITTING or RUNNING.
+    if (this.submissionState === 'SUBMITTING' || this.submissionState === 'RUNNING') {
+        const result = this.detectFinalResult();
+        
+        if (result) {
+            this.submissionState = 'FINISHED';
+            console.log(`[LeetCached] State: FINISHED (${result.status})`);
+            
+            this.stopObserving();
+            
+            if (result.status === 'ACCEPTED') {
+                this.handleAcceptedSubmission();
+            } else {
+                console.log('[LeetCached] Submission Failed:', result.detail);
+            }
+        }
+    }
+  }
+
+  detectRunningState() {
+    // Look for "Pending" or "Judging" indicators
+    // 1. Images with alt text
+    const pendingImages = document.querySelectorAll('img[alt="Pending..."], img[alt="Judging..."]');
+    for (const img of pendingImages) {
+        // Ensure it's visible / in the DOM
+        if (this.isVisible(img)) {
+            return true;
+        }
+    }
+    
+    // 2. Text content in the result area that says "Pending" or "Judging"
+    const resultContainer = document.querySelector('[data-e2e-locator="submission-result"]');
+    if (resultContainer && this.isVisible(resultContainer)) {
+        const text = resultContainer.textContent;
+        if (text.includes('Pending') || text.includes('Judging')) {
+            return true;
+        }
     }
 
     return false;
+  }
+
+  detectFinalResult() {
+    // Accepted Check
+    const greenElements = document.querySelectorAll('.text-green-s, .text-green-60, .dark\\:text-dark-green-s, .dark\\:text-dark-green-60');
+    for (const el of greenElements) {
+        if (el.textContent.includes('Accepted')) {
+            // CRITICAL: Check visibility to ignore hidden templates or previous results
+            if (this.isVisible(el) && this.verifySubmissionContext(el)) {
+                 return { status: 'ACCEPTED', detail: 'Accepted' };
+            }
+        }
+    }
+
+    // Failed Check
+    const redElements = document.querySelectorAll('.text-red-s, .text-red-60, .dark\\:text-dark-red-s, .dark\\:text-dark-red-60');
+    // Common failure texts
+    const failureTexts = ['Wrong Answer', 'Time Limit Exceeded', 'Runtime Error', 'Memory Limit Exceeded', 'Compile Error', 'Output Limit Exceeded'];
+    for (const el of redElements) {
+        const text = el.textContent;
+        // Check if the element contains any of the failure texts
+        const failureType = failureTexts.find(ft => text.includes(ft));
+        if (failureType) {
+             if (this.isVisible(el) && this.verifySubmissionContext(el)) {
+                 return { status: 'FAILED', detail: failureType };
+            }
+        }
+    }
+    
+    return null;
+  }
+  
+  isVisible(elem) {
+    if (!elem) return false;
+    return !!( elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length );
+  }
+  
+  verifySubmissionContext(element) {
+    if (!element) return false;
+    
+    // Checks:
+    // 1. Is it inside the submission result container? (Strongest check)
+    if (element.closest('[data-e2e-locator="submission-result"]')) {
+        console.log('[LeetCached] Context Verified: Inside submission-result container');
+        return true;
+    }
+
+    // 2. Proximity to other result keywords (Legacy check)
+    let parent = element.parentElement;
+    for (let i = 0; i < 5; i++) {
+        if (!parent) break;
+        const text = parent.textContent || '';
+        if (text.includes('Runtime') || text.includes('Memory') || text.includes('Test Cases Passed') || text.includes('Detail') || text.includes('Use Testcase')) {
+             console.log(`[LeetCached] Context Verified: Found keyword near element at depth ${i}`);
+             return true;
+        }
+        parent = parent.parentElement;
+    }
+    
+    // 3. Relaxed check for RUNNING state
+    if (this.submissionState === 'RUNNING') {
+         console.log('[LeetCached] Context Verified: Creating lenient pass due to RUNNING state');
+         return true;
+    }
+
+    console.log('[LeetCached] Context Verification Failed');
+    return false;
+  }
+
+  handleAcceptedSubmission() {
+    // Check auto-detect setting
+    chrome.storage.local.get({ autoDetect: true }).then((res) => {
+      if (!res.autoDetect) {
+        console.log('[LeetCached] Auto-detect disabled.');
+        return;
+      }
+      
+      console.log('[LeetCached] Showing modal for Accepted submission.');
+      // Delay slightly
+      setTimeout(() => {
+        const problemInfo = this.getProblemInfo();
+        this.showAddToScheduleModal(problemInfo);
+      }, 500);
+    });
   }
 
   getProblemInfo() {
@@ -244,14 +399,6 @@ class LeetCodeSubmissionDetector {
       if (match) return match[1];
     }
     return '';
-  }
-
-  handleAcceptedSubmission() {
-    // Delay to allow the success animation to complete
-    setTimeout(() => {
-      const problemInfo = this.getProblemInfo();
-      this.showAddToScheduleModal(problemInfo);
-    }, 1500);
   }
 
   showAddToScheduleModal(problemInfo) {

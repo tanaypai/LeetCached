@@ -12,6 +12,7 @@ class LeetCachedPopup {
     this.editingDates = [];
     this.newProblemDates = [];
     this.searchQuery = '';
+    this.autoDetect = true;
     
     // Manage view state
     this.sortColumn = 'nextReview';
@@ -22,6 +23,7 @@ class LeetCachedPopup {
   
   async init() {
     await this.loadProblems();
+    await this.loadSettings();
     this.renderCalendar();
     this.updateStats();
     this.setupEventListeners();
@@ -132,6 +134,15 @@ class LeetCachedPopup {
         this.switchHelpSection(section);
       });
     });
+
+    // Settings toggle
+    const autoToggle = document.getElementById('auto-detect-toggle');
+    if (autoToggle) {
+      autoToggle.addEventListener('change', (e) => {
+        const enabled = !!e.target.checked;
+        this.saveSetting('autoDetect', enabled);
+      });
+    }
   }
   
   switchHelpSection(section) {
@@ -160,6 +171,32 @@ class LeetCachedPopup {
     // Render manage view if switching to it
     if (tab === 'manage') {
       this.renderManageView();
+    }
+  }
+
+  async loadSettings() {
+    try {
+      const result = await chrome.storage.local.get({ autoDetect: true });
+      this.autoDetect = result.autoDetect;
+      const autoToggle = document.getElementById('auto-detect-toggle');
+      if (autoToggle) autoToggle.checked = !!this.autoDetect;
+    } catch (err) {
+      console.error('Failed to load settings', err);
+    }
+  }
+
+  async saveSetting(key, value) {
+    try {
+      if (key === 'autoDetect') {
+        await chrome.storage.local.set({ autoDetect: !!value });
+        this.autoDetect = !!value;
+      } else {
+        const obj = {};
+        obj[key] = value;
+        await chrome.storage.local.set(obj);
+      }
+    } catch (err) {
+      console.error('Failed to save setting', key, err);
     }
   }
   
@@ -368,10 +405,7 @@ class LeetCachedPopup {
     this.renderCalendar();
   }
   
-  // Legacy method kept for compatibility
-  showDayDetails(dateStr) {
-    this.showSidebarProblems(dateStr);
-  }
+
   
   async toggleCompletion(problemId, dateStr) {
     const problem = this.problems[problemId];

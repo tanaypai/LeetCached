@@ -116,14 +116,8 @@ body {
   transition: all 0.2s;
 }
 
-.nav-tab:nth-child(1),
-.nav-tab:nth-child(2) {
+.nav-tab {
   flex: 1;
-}
-
-.nav-tab:nth-child(3) {
-  width: 220px;
-  flex-shrink: 0;
 }
 
 .nav-tab:hover {
@@ -1650,6 +1644,137 @@ body {
 
 .contact-btn {
   padding: 10px 16px;
+}
+
+/* ========================================
+   Settings View
+   ======================================== */
+
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 4px;
+  overflow-y: auto;
+}
+
+.settings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.settings-empty-icon {
+  font-size: 64px;
+  color: var(--tn-text-dim);
+  opacity: 0.5;
+}
+
+.settings-empty h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tn-text);
+}
+
+.settings-empty p {
+  font-size: 13px;
+  color: var(--tn-text-muted);
+  max-width: 280px;
+}
+
+/* Settings rows */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--tn-bg-dark);
+  border: 1px solid var(--tn-border);
+  border-radius: 8px;
+}
+
+.setting-info {
+  max-width: 82%;
+  width: 100%;
+}
+
+.setting-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tn-text);
+  margin-bottom: 4px;
+}
+
+.setting-desc {
+  font-size: 12px;
+  color: var(--tn-text-dim);
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--tn-surface);
+  transition: .2s;
+  border-radius: 24px;
+  border: 1px solid var(--tn-border);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 2px;
+  background-color: var(--tn-text);
+  transition: .2s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background: linear-gradient(135deg, var(--tn-primary) 0%, var(--tn-secondary) 100%);
+  border-color: transparent;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
 }
 
 /* ========================================

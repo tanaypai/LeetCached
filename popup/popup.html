@@ -34,6 +34,10 @@
         <span class="material-symbols-outlined">help</span>
         <span>Help</span>
       </button>
+      <button class="nav-tab" data-tab="settings">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Settings</span>
+      </button>
     </nav>
 
     <!-- Calendar View -->
@@ -311,6 +315,35 @@
             </div>
           </section>
         </main>
+      </div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settings-view" class="view">
+      <div class="settings-layout">
+        <div class="settings-header">
+        </div>
+        <div class="settings-content">
+          <div class="settings-section">
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Auto-detect accepted submissions</div>
+                <div class="setting-desc">When enabled, problems you submit as "Accepted" on LeetCode will be automatically added to LeetCached. If disabled, use the "Add to LeetCached" button to add problems manually.</div>
+              </div>
+              <div class="setting-control">
+                <label class="switch">
+                  <input type="checkbox" id="auto-detect-toggle" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="settings-empty" id="settings-empty-placeholder" style="display:none;">
+            <span class="material-symbols-outlined settings-empty-icon">settings</span>
+            <h3>More settings coming soon</h3>
+            <p>Additional configuration options will be available in a future update.</p>
+          </div>
+        </div>
       </div>
     </div>
 
