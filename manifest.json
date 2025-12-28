@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LeetCached",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Track and schedule spaced repetitions for LeetCode problems",
   "permissions": [
     "storage"
@@ -10,7 +10,7 @@
     "https://leetcode.com/*"
   ],
   "action": {
-    "default_popup": "popup/popup.html",
+    "default_popup": "popup/index.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

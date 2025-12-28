@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+popup-react/node_modules/
+
+# Build output
+popup-react/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Chrome extension development
+*.crx
+*.pem
+
+# Temporary files
+*.tmp
+*.temp
