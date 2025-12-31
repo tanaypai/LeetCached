@@ -39,7 +39,7 @@ function Header() {
         >
           <Box
             component="img"
-            src="../icons/icon48.png"
+            src="/icons/icon48.png"
             alt="LeetCached"
             sx={{ width: 28, height: 28, objectFit: 'contain' }}
           />

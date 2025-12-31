@@ -17,7 +17,7 @@ function formatDate(date) {
 
 function CalendarView({ problems }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
 
   const stats = useMemo(() => problems.getStats(), [problems]);
 

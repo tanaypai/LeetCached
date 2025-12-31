@@ -6,6 +6,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 import InfoIcon from '@mui/icons-material/Info';
+import StarIcon from '@mui/icons-material/Star';
 import { tokyoNight } from '../theme';
 
 const sections = [
@@ -126,14 +127,26 @@ const helpContent = {
         <Typography variant="body2" sx={{ color: tokyoNight.textDim, fontSize: 10 }}>
           Made with ♥ for the coding interview community
         </Typography>
-        <Link
-          href="https://github.com"
-          target="_blank"
-          rel="noopener"
-          sx={{ fontSize: 10, color: tokyoNight.primary }}
-        >
-          View on GitHub
-        </Link>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+
+          <Link
+            href="https://github.com/tanaypai/LeetCached"
+            target="_blank"
+            rel="noopener"
+            sx={{ 
+              fontSize: 11, 
+              color: tokyoNight.gold, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 0.5,
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' }
+            }}
+          >
+            <StarIcon sx={{ fontSize: 13 }} />
+            Star on GitHub
+          </Link>
+        </Box>
       </>
     ),
   },
