@@ -1,9 +1,9 @@
 # Dependencies
 node_modules/
-popup-react/node_modules/
 
 # Build output
-popup-react/dist/
+popup/dist/
+content/dist/
 
 # IDE
 .vscode/
