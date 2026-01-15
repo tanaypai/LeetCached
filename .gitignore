@@ -1,9 +1,9 @@
 # Dependencies
 node_modules/
 
-# Build output (commented out - dist folders needed for Chrome Web Store)
-# popup/dist/
-# content/dist/
+# Build output
+popup/dist/
+content/dist/
 
 # IDE
 .vscode/
