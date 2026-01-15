@@ -1,12 +1,12 @@
 # LeetCached
 
-A Chrome extension that helps you retain LeetCode solutions through spaced repetition scheduling. Built with a beautiful **Tokyo Night** color theme.
+A Chrome extension that helps you retain LeetCode solutions through spaced repetition scheduling. Built with **Material Design** components and a beautiful **Tokyo Night** color theme.
 
 ![LeetCached Banner](screenshots/banner.png)
 
 ## ✨ Features
 
-- **🎨 Tokyo Night Theme**: Beautiful dark theme inspired by the popular Tokyo Night color palette
+- **🎨 Material Design + Tokyo Night**: Sleek Material UI components styled with the popular Tokyo Night color palette
 - **🔍 Automatic Detection**: Detects when you successfully submit a LeetCode problem and prompts to add it to your schedule
 - **➕ Toolbar Button**: "Add to LeetCached" button in LeetCode's toolbar lets you add any problem anytime
 - **📅 Spaced Repetition Scheduling**: Automatically schedules review dates using proven intervals (1, 3, 7, 14, 30 days)
@@ -61,6 +61,11 @@ A Chrome extension that helps you retain LeetCode solutions through spaced repet
 
 *Built-in help center with getting started guide and FAQs*
 
+### Settings View
+<img src="screenshots/settings-view.png" alt="Settings View" width="400">
+
+*Customize your spaced repetition presets with editable intervals*
+
 ## 🎨 Tokyo Night Theme
 
 LeetCached features a carefully crafted dark theme using the Tokyo Night color palette:
@@ -109,32 +114,73 @@ LeetCached respects your privacy:
 ### Project Structure
 ```
 LeetCached/
-├── manifest.json          # Extension configuration
-├── background/
-│   └── background.js      # Service worker for extension events
-├── content/
-│   ├── content.js         # Submission detection & toolbar button
-│   └── content.css        # Modal & button styling (Tokyo Night)
-├── popup/
-│   ├── popup.html         # Extension popup UI
-│   ├── popup.js           # Calendar and problem management
-│   └── popup.css          # Popup styling (Tokyo Night theme)
-├── icons/
+├── manifest.json              # Extension configuration (Manifest V3)
+├── content/                   # Content script (injected into LeetCode)
+│   ├── src/
+│   │   ├── index.jsx          # React entry point
+│   │   ├── AddButton.jsx      # "Add to LeetCached" toolbar button
+│   │   ├── AddProblemModal.jsx # Modal for adding problems
+│   │   ├── styles.css         # Content script styles
+│   │   └── utils/
+│   │       ├── problemInfo.js      # Extract problem metadata
+│   │       ├── storage.js          # Chrome storage utilities
+│   │       └── submissionDetection.js # Auto-detect accepted submissions
+│   ├── dist/                  # Built content script output
+│   ├── package.json
+│   └── vite.config.js
+├── popup/                     # Extension popup UI
+│   ├── src/
+│   │   ├── main.jsx           # React entry point
+│   │   ├── App.jsx            # Main app component with routing
+│   │   ├── theme.js           # MUI Tokyo Night theme configuration
+│   │   ├── components/
+│   │   │   ├── CalendarView.jsx   # Calendar with scheduled problems
+│   │   │   ├── ManageView.jsx     # Problem list management
+│   │   │   ├── SettingsView.jsx   # Custom preset configuration
+│   │   │   ├── HelpView.jsx       # Help & FAQ section
+│   │   │   ├── Header.jsx         # App header with stats
+│   │   │   └── NavTabs.jsx        # Navigation tabs
+│   │   ├── hooks/
+│   │   │   ├── useProblems.js     # Problem state management
+│   │   │   └── useSettings.js     # Settings state management
+│   │   └── styles/
+│   │       └── index.css          # Global styles
+│   ├── dist/                  # Built popup output
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── icons/                     # Extension icons
 │   ├── icon16.png
 │   ├── icon48.png
 │   └── icon128.png
-└── screenshots/           # README screenshots
+└── screenshots/               # README screenshots
 ```
 
 ### Building
-No build step required - the extension runs directly from source.
+
+The extension uses Vite to build both the popup and content scripts:
+
+```bash
+# Install dependencies
+cd popup && npm install
+cd ../content && npm install
+
+# Build for production
+cd popup && npm run build
+cd ../content && npm run build
+
+# Development mode (watch for changes)
+cd popup && npm run dev      # Starts dev server for popup
+cd content && npm run dev    # Watches and rebuilds content script
+```
 
 ### Tech Stack
-- Vanilla JavaScript (no frameworks)
-- CSS3 with CSS Variables for theming
-- Chrome Extensions Manifest V3
-- JetBrains Mono font
-- Material Symbols icons
+- **React 18** - UI components and state management
+- **Vite** - Fast build tool and dev server
+- **Material UI (MUI) v5** - Component library with custom theming
+- **Emotion** - CSS-in-JS styling solution
+- **Chrome Extensions Manifest V3** - Modern extension architecture
+- **Tokyo Night Theme** - Custom MUI theme with Tokyo Night colors
 
 ## 🤝 Contributing
 
